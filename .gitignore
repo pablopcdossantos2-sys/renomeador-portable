@@ -5,3 +5,5 @@ dist/
 *.spec
 .renomeador_portable_historico.json
 .renomeador_portable_historico.json.*.tmp
+assets/renomeador.png
+assets/renomeador.ico

@@ -6,11 +6,21 @@ from renamer import (
     HISTORY_FILENAME,
     RenameOptions,
     apply_renames,
+    correct_spelling,
     create_plan,
+    smart_title_case,
     transform_filename,
     undo_last_renaming,
     validate_filename,
 )
+
+
+class FakeChecker:
+    def __init__(self, mapping):
+        self.mapping = mapping
+
+    def correction(self, word):
+        return self.mapping.get(word, word)
 
 
 class TransformTests(unittest.TestCase):
@@ -36,6 +46,41 @@ class TransformTests(unittest.TestCase):
             case_mode="MAIÚSCULAS",
         )
         self.assertEqual(transform_filename("Relatorio mensal.docx", options), "RESUMO MENSAL.docx")
+
+    def test_smart_portuguese_title_case_keeps_short_words_lowercase(self):
+        options = RenameOptions(case_mode="Título inteligente (PT-BR)")
+        self.assertEqual(
+            transform_filename("o SENHOR DA CASA DE PEDRO.pdf", options),
+            "O Senhor da Casa de Pedro.pdf",
+        )
+
+    def test_legacy_title_case_uses_smart_portuguese_rules(self):
+        options = RenameOptions(case_mode="Capitalizar palavras")
+        self.assertEqual(
+            transform_filename("a CASA E o jardim.txt", options),
+            "A Casa e o Jardim.txt",
+        )
+
+    def test_smart_english_title_case_keeps_short_words_lowercase(self):
+        options = RenameOptions(case_mode="Title Case (English)")
+        self.assertEqual(
+            transform_filename("the LORD OF the rings.txt", options),
+            "The Lord of the Rings.txt",
+        )
+
+    def test_title_case_preserves_common_acronyms(self):
+        self.assertEqual(smart_title_case("relatorio em PDF", "pt-BR"), "Relatorio em PDF")
+
+    def test_optional_spell_correction_preserves_case_and_acronyms(self):
+        checker = FakeChecker({"relatorio": "relatório", "recieve": "receive"})
+        self.assertEqual(
+            correct_spelling("relatorio Recieve API iPhone", checker=checker),
+            "relatório Receive API iPhone",
+        )
+
+    def test_spell_correction_is_not_applied_unless_enabled(self):
+        options = RenameOptions(case_mode="Manter", spellcheck=False)
+        self.assertEqual(transform_filename("relatorio.pdf", options), "relatorio.pdf")
 
     def test_validation_rejects_windows_reserved_names(self):
         self.assertIsNotNone(validate_filename("CON.txt"))

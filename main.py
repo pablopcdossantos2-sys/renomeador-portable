@@ -24,55 +24,55 @@ from renamer import (
 
 PALETTES = {
     "Escuro": {
-        "app": "#0d1728",
-        "surface": "#142238",
-        "surface_alt": "#192b43",
-        "navy": "#0a1424",
-        "navy_light": "#1b304c",
-        "ink": "#e7eef9",
-        "muted": "#9aacc4",
-        "border": "#30435d",
-        "blue": "#4285ff",
-        "blue_hover": "#2f70ee",
-        "blue_soft": "#1e3558",
-        "green": "#40d7a0",
-        "green_soft": "#123e39",
-        "red": "#ff7882",
-        "red_soft": "#492936",
-        "amber": "#f4bd58",
-        "amber_soft": "#453721",
-        "row_alt": "#172941",
-        "log": "#081322",
-        "log_text": "#d5e2f5",
-        "heading": "#203149",
-        "input": "#0f1c2f",
-        "selection": "#274a78",
+        "app": "#111827",
+        "surface": "#1f2937",
+        "surface_alt": "#273244",
+        "navy": "#1f2937",
+        "navy_light": "#374151",
+        "ink": "#e5e7eb",
+        "muted": "#9ca3af",
+        "border": "#374151",
+        "blue": "#60a5fa",
+        "blue_hover": "#3b82f6",
+        "blue_soft": "#263b58",
+        "green": "#6ee7b7",
+        "green_soft": "#19382f",
+        "red": "#fca5a5",
+        "red_soft": "#3f2528",
+        "amber": "#fcd34d",
+        "amber_soft": "#3b3120",
+        "row_alt": "#202b3b",
+        "log": "#111827",
+        "log_text": "#d1d5db",
+        "heading": "#374151",
+        "input": "#1f2937",
+        "selection": "#344866",
         "white": "#ffffff",
     },
     "Claro": {
-        "app": "#eef2f7",
+        "app": "#f7f8fa",
         "surface": "#ffffff",
-        "surface_alt": "#f5f8fc",
-        "navy": "#17365d",
-        "navy_light": "#274b75",
-        "ink": "#1c2c43",
-        "muted": "#65748a",
-        "border": "#d5dfeb",
-        "blue": "#2864df",
-        "blue_hover": "#174fca",
-        "blue_soft": "#e8efff",
-        "green": "#16835d",
-        "green_soft": "#e4f5ec",
-        "red": "#bd3444",
-        "red_soft": "#fff0f1",
-        "amber": "#9a6514",
-        "amber_soft": "#fff4dc",
-        "row_alt": "#f5f8fc",
-        "log": "#142238",
-        "log_text": "#d6e0f0",
-        "heading": "#eaf0f7",
-        "input": "#fbfcfe",
-        "selection": "#d8e6ff",
+        "surface_alt": "#f3f4f6",
+        "navy": "#1f2937",
+        "navy_light": "#374151",
+        "ink": "#111827",
+        "muted": "#6b7280",
+        "border": "#e5e7eb",
+        "blue": "#2563eb",
+        "blue_hover": "#1d4ed8",
+        "blue_soft": "#eff6ff",
+        "green": "#047857",
+        "green_soft": "#ecfdf5",
+        "red": "#b91c1c",
+        "red_soft": "#fef2f2",
+        "amber": "#92400e",
+        "amber_soft": "#fffbeb",
+        "row_alt": "#f9fafb",
+        "log": "#1f2937",
+        "log_text": "#e5e7eb",
+        "heading": "#f3f4f6",
+        "input": "#ffffff",
+        "selection": "#dbeafe",
         "white": "#ffffff",
     },
 }
@@ -135,8 +135,8 @@ class RenamerGUI:
     def __init__(self, root: tk.Tk) -> None:
         self.root = root
         self.root.title("Renomeador Portátil")
-        self.root.geometry("1280x850")
-        self.root.minsize(1000, 700)
+        self.root.geometry("1240x820")
+        self.root.minsize(960, 660)
         self.theme_var = tk.StringVar(value="Escuro")
         self.palette = PALETTES[self.theme_var.get()]
         self.theme_widgets: dict[tk.Widget, str] = {}
@@ -158,7 +158,7 @@ class RenamerGUI:
         self.case_var = tk.StringVar(value="Título inteligente (PT-BR/EN)")
         self.ignore_case_var = tk.BooleanVar(value=False)
         self.spellcheck_var = tk.BooleanVar(value=False)
-        self.spell_language_var = tk.StringVar(value="Português (Brasil)")
+        self.spell_language_var = tk.StringVar(value="Português + English")
         self.custom_words_var = tk.StringVar()
         self.filter_var = tk.StringVar(value="Todos os itens")
         self.search_var = tk.StringVar()
@@ -235,7 +235,7 @@ class RenamerGUI:
         except tk.TclError:
             pass
         style.configure("App.TFrame", background=p["app"])
-        style.configure("Card.TFrame", background=p["surface"], borderwidth=1, relief="solid")
+        style.configure("Card.TFrame", background=p["surface"], borderwidth=0, relief="flat")
         style.configure("CardInner.TFrame", background=p["surface"])
         style.configure("Header.TFrame", background=p["navy"])
         style.configure("Title.TLabel", background=p["navy"], foreground=p["white"], font=("Segoe UI", 20, "bold"))
@@ -246,9 +246,9 @@ class RenamerGUI:
         style.configure("Field.TLabel", background=p["surface"], foreground=p["ink"], font=("Segoe UI", 9, "bold"))
         style.configure("AppText.TLabel", background=p["app"], foreground=p["muted"], font=("Segoe UI", 9))
         style.configure("AppTitle.TLabel", background=p["app"], foreground=p["ink"], font=("Segoe UI", 12, "bold"))
-        style.configure("TButton", font=("Segoe UI", 9), padding=(10, 7), background=p["surface_alt"], foreground=p["ink"], borderwidth=0)
+        style.configure("TButton", font=("Segoe UI", 9), padding=(9, 6), background=p["surface_alt"], foreground=p["ink"], borderwidth=0)
         style.map("TButton", background=[("active", p["blue_soft"]), ("disabled", p["surface_alt"])])
-        style.configure("Primary.TButton", font=("Segoe UI", 10, "bold"), padding=(14, 9), background=p["blue"], foreground=p["white"])
+        style.configure("Primary.TButton", font=("Segoe UI", 9, "bold"), padding=(12, 8), background=p["blue"], foreground=p["white"])
         style.map("Primary.TButton", background=[("active", p["blue_hover"]), ("pressed", p["blue_hover"])])
         style.configure("Preview.TButton", font=("Segoe UI", 10, "bold"), padding=(13, 9), background=p["blue_soft"], foreground=p["blue"])
         style.map("Preview.TButton", background=[("active", p["selection"])])
@@ -261,8 +261,8 @@ class RenamerGUI:
         style.map("Modern.TCombobox", fieldbackground=[("readonly", p["input"]), ("focus", p["surface"])], foreground=[("readonly", p["ink"])])
         style.configure("Card.TCheckbutton", background=p["surface"], foreground=p["ink"], font=("Segoe UI", 9), padding=(0, 3))
         style.map("Card.TCheckbutton", background=[("active", p["surface"])])
-        style.configure("Treeview", background=p["surface"], fieldbackground=p["surface"], foreground=p["ink"], rowheight=29, bordercolor=p["border"], borderwidth=1, font=("Segoe UI", 9))
-        style.configure("Treeview.Heading", background=p["heading"], foreground=p["ink"], font=("Segoe UI", 9, "bold"), padding=(7, 9), relief="flat")
+        style.configure("Treeview", background=p["surface"], fieldbackground=p["surface"], foreground=p["ink"], rowheight=27, bordercolor=p["border"], borderwidth=0, font=("Segoe UI", 9))
+        style.configure("Treeview.Heading", background=p["heading"], foreground=p["muted"], font=("Segoe UI", 9, "bold"), padding=(7, 7), relief="flat")
         style.map("Treeview", background=[("selected", p["selection"])], foreground=[("selected", p["ink"])])
         style.configure("Vertical.TScrollbar", background=p["surface_alt"], troughcolor=p["app"], bordercolor=p["app"], arrowcolor=p["muted"])
 
@@ -348,7 +348,7 @@ class RenamerGUI:
         outer.columnconfigure(0, weight=1)
         outer.rowconfigure(2, weight=1)
 
-        header = self._tk_frame(outer, "header", height=78)
+        header = self._tk_frame(outer, "header", height=70)
         header.grid(row=0, column=0, sticky="ew", pady=(0, 11))
         header.grid_propagate(False)
         accent = tk.Frame(header, bg=p["blue"], width=5)
@@ -368,7 +368,7 @@ class RenamerGUI:
         logo_label.pack(side="left", padx=(14, 12), pady=10)
         heading = self._tk_frame(header, "header",)
         heading.pack(side="left", fill="both", expand=True, pady=12)
-        title = self._tk_label(heading, "Renomeador Portátil", "header_title", font=("Segoe UI", 19, "bold"))
+        title = self._tk_label(heading, "Renomeador Portátil", "header_title", font=("Segoe UI", 18, "bold"))
         title.pack(anchor="w")
         subtitle = self._tk_label(
             heading, "Renomeie arquivos e pastas com rapidez, controle e segurança.", "header_subtitle",
@@ -390,7 +390,7 @@ class RenamerGUI:
         folder_card.columnconfigure(1, weight=1)
         folder_left = ttk.Frame(folder_card, style="CardInner.TFrame")
         folder_left.grid(row=0, column=0, sticky="w", padx=(0, 16))
-        ttk.Label(folder_left, text="ETAPA 1", style="Eyebrow.TLabel").pack(anchor="w")
+        ttk.Label(folder_left, text="PASTA", style="Eyebrow.TLabel").pack(anchor="w")
         ttk.Label(folder_left, text="Pasta de destino", style="Section.TLabel").pack(anchor="w", pady=(2, 0))
         ttk.Entry(folder_card, textvariable=self.folder_var, style="Modern.TEntry").grid(
             row=0, column=1, sticky="ew", padx=(0, 8)
@@ -421,7 +421,7 @@ class RenamerGUI:
         left_panel.columnconfigure(0, weight=1)
         left_intro = ttk.Frame(left_panel, style="App.TFrame")
         left_intro.grid(row=0, column=0, sticky="ew", pady=(0, 8))
-        ttk.Label(left_intro, text="ETAPA 2", style="Eyebrow.TLabel").pack(anchor="w")
+        ttk.Label(left_intro, text="OPÇÕES", style="Eyebrow.TLabel").pack(anchor="w")
         ttk.Label(left_intro, text="Regras de renomeação", style="AppTitle.TLabel").pack(anchor="w", pady=(2, 0))
         ttk.Label(left_intro, text="Combine somente as opções de que precisa.", style="AppText.TLabel").pack(anchor="w", pady=(2, 0))
 
@@ -431,7 +431,7 @@ class RenamerGUI:
         rules = scroller.inner
         rules.columnconfigure(0, weight=1)
 
-        cut = self._rule_card(rules, "✂  Cortar caracteres", "A extensão dos arquivos será preservada.")
+        cut = self._rule_card(rules, "Cortar caracteres", "A extensão dos arquivos será preservada.")
         cut_row = ttk.Frame(cut, style="CardInner.TFrame")
         cut_row.pack(fill="x")
         cut_row.columnconfigure(1, weight=1)
@@ -445,12 +445,9 @@ class RenamerGUI:
             row=0, column=3, sticky="ew"
         )
 
-        remove = self._rule_card(rules, "↔  Remover termos")
+        remove = self._rule_card(rules, "Remover termos")
         self._field(remove, "Termos separados por vírgula", self.remove_terms_var)
-        ttk.Checkbutton(remove, text="Ignorar maiúsculas/minúsculas", variable=self.ignore_case_var,
-                        style="Card.TCheckbutton").pack(anchor="w", pady=(6, 0))
-
-        replace = self._rule_card(rules, "⇄  Substituir texto")
+        replace = self._rule_card(rules, "Substituir texto")
         replace_row = ttk.Frame(replace, style="CardInner.TFrame")
         replace_row.pack(fill="x")
         replace_row.columnconfigure(0, weight=1)
@@ -460,7 +457,17 @@ class RenamerGUI:
         ttk.Entry(replace_row, textvariable=self.replace_from_var, style="Modern.TEntry").grid(row=1, column=0, sticky="ew", padx=(0, 6))
         ttk.Entry(replace_row, textvariable=self.replace_to_var, style="Modern.TEntry").grid(row=1, column=1, sticky="ew", padx=(6, 0))
 
-        additions = self._rule_card(rules, "＋  Prefixo e sufixo")
+        ttk.Checkbutton(
+            replace, text="Ignorar maiúsculas/minúsculas ao remover ou substituir",
+            variable=self.ignore_case_var, style="Card.TCheckbutton",
+        ).pack(anchor="w", pady=(7, 0))
+        ttk.Label(
+            replace,
+            text="A busca ignora espaços externos. A extensão do arquivo é preservada.",
+            style="Hint.TLabel", wraplength=300, justify="left",
+        ).pack(anchor="w", pady=(3, 0))
+
+        additions = self._rule_card(rules, "Prefixo e sufixo")
         add_row = ttk.Frame(additions, style="CardInner.TFrame")
         add_row.pack(fill="x")
         add_row.columnconfigure(0, weight=1)
@@ -470,7 +477,7 @@ class RenamerGUI:
         ttk.Entry(add_row, textvariable=self.prefix_var, style="Modern.TEntry").grid(row=1, column=0, sticky="ew", padx=(0, 6))
         ttk.Entry(add_row, textvariable=self.suffix_var, style="Modern.TEntry").grid(row=1, column=1, sticky="ew", padx=(6, 0))
 
-        formatting = self._rule_card(rules, "Aa  Capitalização e ortografia")
+        formatting = self._rule_card(rules, "Capitalização e ortografia")
         ttk.Label(formatting, text="Estilo de capitalização", style="Field.TLabel").pack(anchor="w", pady=(0, 4))
         ttk.Combobox(
             formatting, textvariable=self.case_var, state="readonly", style="Modern.TCombobox",
@@ -478,14 +485,14 @@ class RenamerGUI:
         ).pack(fill="x")
         ttk.Checkbutton(formatting, text="Corrigir ortografia automaticamente", variable=self.spellcheck_var,
                         style="Card.TCheckbutton").pack(anchor="w", pady=(8, 4))
-        ttk.Label(formatting, text="Idioma da correção", style="Field.TLabel").pack(anchor="w", pady=(0, 4))
+        ttk.Label(formatting, text="Dicionário(s) de correção", style="Field.TLabel").pack(anchor="w", pady=(0, 4))
         ttk.Combobox(
             formatting, textvariable=self.spell_language_var, state="readonly", style="Modern.TCombobox",
-            values=("Português (Brasil)", "English"),
+            values=("Português (Brasil)", "English", "Português + English"),
         ).pack(fill="x")
         ttk.Label(formatting, text="Vocabulário extra / palavras para preservar", style="Field.TLabel").pack(anchor="w", pady=(8, 4))
         ttk.Entry(formatting, textvariable=self.custom_words_var, style="Modern.TEntry").pack(fill="x")
-        ttk.Label(formatting, text="Separe por vírgula. A correção é local e pode errar nomes próprios.",
+        ttk.Label(formatting, text="Separe por vírgula. Os termos reconhecidos em qualquer idioma serão preservados; confira a prévia.",
                   style="Hint.TLabel", wraplength=300, justify="left").pack(anchor="w", pady=(5, 0))
 
         right_panel = ttk.Frame(workspace, style="App.TFrame")
@@ -510,7 +517,7 @@ class RenamerGUI:
         preview_header = ttk.Frame(preview_card, style="CardInner.TFrame")
         preview_header.grid(row=0, column=0, sticky="ew")
         preview_header.columnconfigure(0, weight=1)
-        ttk.Label(preview_header, text="ETAPA 3", style="Eyebrow.TLabel").grid(row=0, column=0, sticky="w")
+        ttk.Label(preview_header, text="PRÉVIA", style="Eyebrow.TLabel").grid(row=0, column=0, sticky="w")
         ttk.Label(preview_header, text="Pré-visualização de arquivos e pastas", style="Section.TLabel").grid(row=1, column=0, sticky="w", pady=(2, 0))
         ttk.Label(preview_header, text="Marque as linhas que deseja renomear. Pastas selecionadas levam seus conteúdos junto.",
                   style="Hint.TLabel").grid(row=2, column=0, sticky="w", pady=(3, 0))
@@ -594,7 +601,7 @@ class RenamerGUI:
     def _make_badge(self, parent: tk.Widget, variable: tk.StringVar, role: str) -> tk.Label:
         label = tk.Label(
             parent, textvariable=variable, font=("Segoe UI", 9, "bold"),
-            padx=8, pady=8, relief="flat", borderwidth=0,
+            padx=8, pady=5, relief="flat", borderwidth=0,
         )
         self.theme_widgets[label] = role
         return label

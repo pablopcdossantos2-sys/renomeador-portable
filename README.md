@@ -12,10 +12,10 @@ Aplicativo portátil para Windows que renomeia arquivos e pastas em lote, com pr
 - Alterna entre os modos **Claro** e **Escuro**.
 - Usa um ícone próprio nas janelas do aplicativo e no executável Windows.
 - Remove uma quantidade de caracteres do início ou do final do nome, preservando a extensão dos arquivos.
-- Remove vários termos, separados por vírgula, e substitui texto com opção de ignorar maiúsculas/minúsculas.
+- Remove vários termos, separados por vírgula, e substitui texto literalmente, com opção de ignorar maiúsculas/minúsculas. A substituição atua sobre o nome antes da extensão; espaços acidentais nas extremidades do texto buscado são desconsiderados.
 - Adiciona prefixos e sufixos.
 - Converte nomes para MAIÚSCULAS, minúsculas ou aplica capitalização inteligente em português ou inglês.
-- Corrige ortografia opcionalmente com dicionários locais de português e inglês e vocabulário suplementar; permite adicionar palavras personalizadas.
+- Corrige ortografia opcionalmente com dicionário português, inglês ou ambos ao mesmo tempo; combina vocabulários suplementares e preserva termos reconhecidos em qualquer idioma. Também permite adicionar palavras personalizadas.
 - Detecta nomes inválidos, destinos ocupados e colisões de caminhos.
 - Permite desfazer o último lote bem-sucedido, desde que os itens ainda estejam nos caminhos esperados.
 
@@ -53,7 +53,7 @@ O script gera os arquivos PNG/ICO do ícone na primeira inicialização. Se o Pi
 
 1. Selecione a pasta que servirá de raiz para a análise.
 2. Deixe **Incluir subpastas e arquivos dentro delas** marcado para analisar a árvore inteira. Desmarque para limitar a análise ao conteúdo diretamente dentro da pasta raiz.
-3. Configure as regras. Elas são aplicadas ao nome de cada arquivo/pasta; os caminhos dos descendentes acompanham automaticamente as pastas selecionadas que forem renomeadas.
+3. Configure as regras. Em **Substituir texto**, informe o trecho em **De** e o novo conteúdo em **Para**; a extensão do arquivo é mantida. O texto buscado não diferencia maiúsculas/minúsculas somente quando a opção correspondente estiver marcada. As regras são aplicadas ao nome de cada arquivo/pasta; os caminhos dos descendentes acompanham automaticamente as pastas selecionadas que forem renomeadas.
 4. Clique em **Pré-visualizar**. Use a caixa da primeira coluna para marcar ou desmarcar itens individuais. **Selecionar alterações**, **Desmarcar tudo** e **Inverter seleção** ajudam a selecionar vários itens.
 5. Use a busca e o filtro para localizar itens, pastas, arquivos, conflitos ou alterações propostas.
 6. Confira a coluna **Situação**. Nenhum item será renomeado quando houver conflitos no plano atual; resolva-os primeiro.
@@ -70,7 +70,7 @@ O modo **Título inteligente (PT-BR)** mantém conectivos como *a, as, o, os, um
 
 O modo **Title Case (English)** aplica uma regra equivalente aos conectivos ingleses, como *a, an, the, and, but, or, as, at, by, for, in, of, on, to, from, with* e *without*. Siglas comuns como PDF, API, HTML e NASA são preservadas.
 
-A correção ortográfica usa o dicionário da biblioteca **pyspellchecker** e vocabulários suplementares do projeto em **assets/dictionary_pt_br.txt** e **assets/dictionary_en.txt**. O vocabulário PT-BR inclui formas brasileiras e termos de informática/documentos; o inglês inclui termos de arquivos, pastas, interface e uso técnico. Também é possível informar palavras personalizadas, separadas por vírgula, para que sejam preservadas pelo corretor.
+A correção ortográfica usa o dicionário da biblioteca **pyspellchecker** e vocabulários suplementares do projeto em **assets/dictionary_pt_br.txt** e **assets/dictionary_en.txt**. Na lista **Dicionário(s) de correção**, escolha **Português (Brasil)**, **English** ou **Português + English**. A opção combinada carrega os dois dicionários simultaneamente, para títulos que misturam português e inglês. Palavras reconhecidas em qualquer um dos idiomas são preservadas. O vocabulário PT-BR inclui formas brasileiras e termos de informática/documentos; o inglês inclui termos de arquivos, pastas, interface e uso técnico. Também é possível informar palavras personalizadas, separadas por vírgula, para que sejam preservadas pelo corretor.
 
 A correção é **opcional, local e baseada em palavras**, não uma revisão gramatical. Ela pode sugerir palavras erradas no lugar de nomes próprios, marcas, modelos, siglas não reconhecidas ou termos técnicos. O dicionário português é suplementar ao dicionário português geral; não é uma edição completa e separada exclusivamente de PT-BR. Confira sempre a pré-visualização antes de executar um lote.
 

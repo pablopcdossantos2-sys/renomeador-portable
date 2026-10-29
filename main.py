@@ -43,6 +43,8 @@ class RenamerGUI:
         self.suffix_var = tk.StringVar()
         self.case_var = tk.StringVar(value="Manter")
         self.ignore_case_var = tk.BooleanVar(value=False)
+        self.spellcheck_var = tk.BooleanVar(value=False)
+        self.spell_language_var = tk.StringVar(value="Português (Brasil)")
 
         self._build_ui()
         self.root.bind("<Control-Return>", lambda _event: self.preview())
@@ -129,9 +131,27 @@ class RenamerGUI:
             additions,
             textvariable=self.case_var,
             state="readonly",
-            values=("Manter", "MAIÚSCULAS", "minúsculas", "Capitalizar palavras"),
-            width=22,
+            values=("Manter", "MAIÚSCULAS", "minúsculas", "Título inteligente (PT-BR)", "Title Case (English)"),
+            width=25,
         ).grid(row=1, column=2, columnspan=2, sticky="ew", pady=(7, 0))
+        ttk.Checkbutton(
+            additions,
+            text="Corrigir ortografia automaticamente (opcional)",
+            variable=self.spellcheck_var,
+        ).grid(row=2, column=0, columnspan=2, sticky="w", pady=(9, 0))
+        ttk.Label(additions, text="Idioma:").grid(row=2, column=2, sticky="e", padx=(8, 5), pady=(9, 0))
+        ttk.Combobox(
+            additions,
+            textvariable=self.spell_language_var,
+            state="readonly",
+            values=("Português (Brasil)", "English"),
+            width=18,
+        ).grid(row=2, column=3, sticky="ew", pady=(7, 0))
+        ttk.Label(
+            additions,
+            text="A correção é local; confira a prévia, pois nomes próprios podem ser alterados.",
+            style="Hint.TLabel",
+        ).grid(row=3, column=0, columnspan=4, sticky="w", pady=(7, 0))
 
         action_row = ttk.Frame(outer)
         action_row.pack(fill="x", pady=(0, 8))
@@ -237,6 +257,8 @@ class RenamerGUI:
             suffix=self.suffix_var.get(),
             case_mode=self.case_var.get(),
             ignore_case=self.ignore_case_var.get(),
+            spellcheck=self.spellcheck_var.get(),
+            spell_language=self.spell_language_var.get(),
         )
 
     def _show_plan(self, items: list[RenameItem]) -> None:
@@ -260,7 +282,7 @@ class RenamerGUI:
             return None
         try:
             items = create_plan(folder, options)
-        except (OSError, ValueError) as error:
+        except (OSError, ValueError, RuntimeError) as error:
             messagebox.showerror("Não foi possível analisar a pasta", str(error))
             return None
         self._show_plan(items)
@@ -321,7 +343,7 @@ class RenamerGUI:
         try:
             fresh_plan = create_plan(folder, self._get_options() or RenameOptions())
             self._show_plan(fresh_plan)
-        except OSError:
+        except (OSError, RuntimeError):
             pass
 
     def undo(self) -> None:

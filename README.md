@@ -1,21 +1,25 @@
 # Renomeador Portátil
 
-Aplicativo gratuito para Windows que renomeia vários arquivos de uma pasta usando regras simples, com pré-visualização e opção para desfazer o último lote.
+Aplicativo portátil para Windows que renomeia arquivos e pastas em lote, com pré-visualização, seleção individual dos itens, temas claro/escuro e opção de desfazer o último lote.
 
-## O que faz
+## Funcionalidades
 
-- Remove uma quantidade de caracteres do início ou do final do nome, preservando a extensão.
-- Remove vários termos, separados por vírgula.
-- Substitui um texto por outro, com opção de ignorar maiúsculas/minúsculas.
-- Adiciona prefixo e sufixo.
-- Converte nomes para MAIÚSCULAS, minúsculas ou aplica capitalização inteligente de títulos em português ou inglês.
-- Deixa conectivos como “de”, “da”, “e”, “of”, “the” em minúsculas no meio do título, mantendo a primeira palavra capitalizada.
-- Opcionalmente corrige a ortografia em português ou inglês usando dicionários locais, sem enviar nomes de arquivos para a internet.
-- Mostra os nomes propostos antes de alterar qualquer arquivo.
-- Detecta nomes inválidos, destinos ocupados e colisões entre arquivos.
-- Permite desfazer o último lote bem-sucedido, desde que os arquivos ainda estejam nos nomes esperados.
+- Renomeia arquivos, pastas e subpastas, incluindo os arquivos dentro delas.
+- Permite incluir ou limitar a análise aos itens diretamente dentro da pasta escolhida.
+- Permite marcar/desmarcar na prévia os itens que deseja renomear, com ações de seleção em lote, inversão e filtros.
+- Mostra o caminho atual e o caminho proposto, o tipo do item e os conflitos antes de executar.
+- Abre maximizado por padrão no Windows.
+- Alterna entre os modos **Claro** e **Escuro**.
+- Usa um ícone próprio nas janelas do aplicativo e no executável Windows.
+- Remove uma quantidade de caracteres do início ou do final do nome, preservando a extensão dos arquivos.
+- Remove vários termos, separados por vírgula, e substitui texto com opção de ignorar maiúsculas/minúsculas.
+- Adiciona prefixos e sufixos.
+- Converte nomes para MAIÚSCULAS, minúsculas ou aplica capitalização inteligente em português ou inglês.
+- Corrige ortografia opcionalmente com dicionários locais de português e inglês e vocabulário suplementar; permite adicionar palavras personalizadas.
+- Detecta nomes inválidos, destinos ocupados e colisões de caminhos.
+- Permite desfazer o último lote bem-sucedido, desde que os itens ainda estejam nos caminhos esperados.
 
-O aplicativo trabalha somente com arquivos diretamente dentro da pasta escolhida. Ele não altera arquivos dentro de subpastas e mantém as extensões.
+A extensão dos arquivos é preservada. Links simbólicos não são seguidos nem renomeados. O programa não altera a pasta raiz que foi escolhida como destino, mas pode renomear pastas e subpastas que aparecem na pré-visualização.
 
 ## Como usar no Windows
 
@@ -26,72 +30,67 @@ O aplicativo trabalha somente com arquivos diretamente dentro da pasta escolhida
 3. Na seção **Artifacts**, baixe **RenomeadorPortable-Windows**.
 4. Extraia o ZIP e abra **RenomeadorPortable.exe**.
 
-O executável inclui os dicionários necessários à correção ortográfica e não exige Python instalado ou uma instalação tradicional. O Windows pode exibir um aviso de segurança para programas baixados da internet; confira se o arquivo foi baixado deste repositório antes de optar por executá-lo.
+O executável inclui o ícone e os dicionários locais e não exige Python instalado ou instalação tradicional. O Windows pode exibir um aviso de segurança para programas baixados da internet; confira se o arquivo veio deste repositório antes de optar por executá-lo.
 
-Para publicar uma versão sem instalar Git no computador: abra **Actions → Testes e executável Windows → Run workflow**, selecione a branch main e informe uma versão como v0.1.0 no campo de versão. Deixe o campo vazio para apenas gerar o executável. Após a execução bem-sucedida, a versão será publicada em **Releases** com o EXE e o ZIP.
+Para publicar uma versão sem instalar Git no computador: abra **Actions → Testes e executável Windows → Run workflow**, selecione a branch **main** e informe uma versão como **v0.1.0** no campo de versão. Deixe o campo vazio para apenas gerar o executável. Após a execução bem-sucedida, a versão será publicada em **Releases** com o EXE e o ZIP.
 
 ### Opção 2 — Executar o código-fonte
 
 É necessário ter Python 3.10 ou mais recente instalado com o componente **Tkinter**.
 
 1. Baixe o repositório pelo botão **Code → Download ZIP** e extraia os arquivos.
-2. (Opcional, mas recomendado) Abra um terminal nessa pasta e instale a dependência de correção ortográfica:
+2. Abra um terminal nessa pasta e instale as dependências:
 
     py -m pip install -r requirements.txt
 
-3. Abra main.py com Python ou execute no terminal:
+3. Execute:
 
     py main.py
 
-Sem o pacote `pyspellchecker`, o programa ainda pode fazer renomeações e aplicar regras de capitalização; apenas a opção de correção ortográfica ficará indisponível.
+O script gera os arquivos PNG/ICO do ícone na primeira inicialização. Se o Pillow não estiver disponível, a interface ainda abre, mas a geração/visualização do ícone poderá não funcionar.
 
 ## Passo a passo
 
-1. Selecione a pasta que contém os arquivos.
-2. Configure uma ou mais regras. As regras são aplicadas nesta ordem: cortar caracteres, remover termos, substituir texto, normalizar espaços, acrescentar prefixo/sufixo, corrigir ortografia (se ativada) e aplicar a capitalização escolhida.
-3. Escolha **Título inteligente (PT-BR)** ou **Title Case (English)** para capitalizar títulos com os conectivos habituais em minúsculas. A extensão do arquivo não é alterada.
-4. Opcionalmente, marque **Corrigir ortografia automaticamente** e selecione **Português (Brasil)** ou **English**.
-5. Clique em **Pré-visualizar**. Linhas marcadas como **Conflito** precisam ser corrigidas antes de prosseguir.
-6. Clique em **Renomear arquivos** e confirme a operação.
-7. Para reverter o último lote, selecione a mesma pasta e clique em **Desfazer último lote**.
+1. Selecione a pasta que servirá de raiz para a análise.
+2. Deixe **Incluir subpastas e arquivos dentro delas** marcado para analisar a árvore inteira. Desmarque para limitar a análise ao conteúdo diretamente dentro da pasta raiz.
+3. Configure as regras. Elas são aplicadas ao nome de cada arquivo/pasta; os caminhos dos descendentes acompanham automaticamente as pastas selecionadas que forem renomeadas.
+4. Clique em **Pré-visualizar**. Use a caixa da primeira coluna para marcar ou desmarcar itens individuais. **Selecionar alterações**, **Desmarcar tudo** e **Inverter seleção** ajudam a selecionar vários itens.
+5. Use a busca e o filtro para localizar itens, pastas, arquivos, conflitos ou alterações propostas.
+6. Confira a coluna **Situação**. Nenhum item será renomeado quando houver conflitos no plano atual; resolva-os primeiro.
+7. Clique em **Renomear selecionados** e confirme a operação.
+8. Para reverter o lote mais recente, selecione a mesma pasta e clique em **Desfazer último lote**.
 
-O atalho **Ctrl + Enter** abre a pré-visualização.
+O atalho **Ctrl + Enter** abre a pré-visualização. Para marcar/desmarcar a linha selecionada, clique na caixa de seleção ou pressione a barra de espaço quando a tabela estiver focada.
 
-**Exemplo:** para converter `2024_relatorio final.pdf` em `Relatorio Final.pdf`, use **Do início = 5** e **Título inteligente (PT-BR)**. Se também ativar a correção ortográfica em português, o corretor poderá sugerir `Relatório Final.pdf`.
+**Como a seleção de pastas funciona:** marcar uma pasta para renomear também muda o caminho de seus conteúdos, como aconteceria no Explorador de Arquivos. Isso não renomeia automaticamente o nome-base dos arquivos que estão dentro dela. Para alterar o próprio nome de um arquivo, marque também a linha dele. Se desmarcar a pasta, mas mantiver um arquivo selecionado, o arquivo é renomeado dentro do nome atual da pasta.
 
-## Capitalização inteligente
+## Capitalização inteligente e dicionários
 
-O modo **Título inteligente (PT-BR)** mantém em minúsculas conectivos como *a, as, o, os, um, uma, de, da, das, do, dos, e, em, por, para, com, sem, no, na, nos, nas, ao, à, às, pelo* e *pela*, exceto quando a palavra estiver no início do nome.
+O modo **Título inteligente (PT-BR)** mantém conectivos como *a, as, o, os, um, uma, de, da, das, do, dos, e, em, por, para, com, sem, no, na, nos, nas, ao, à, às* e *pelo* em minúsculas no meio do título, exceto no início do nome.
 
-O modo **Title Case (English)** aplica uma regra equivalente a conectivos ingleses como *a, an, the, and, but, or, as, at, by, for, in, of, on, to, from, with* e *without*, exceto no início do nome. As listas são práticas e não substituem um manual editorial para nomes próprios ou títulos de estilos específicos. Siglas comuns como PDF, API, HTML e NASA são preservadas.
+O modo **Title Case (English)** aplica uma regra equivalente aos conectivos ingleses, como *a, an, the, and, but, or, as, at, by, for, in, of, on, to, from, with* e *without*. Siglas comuns como PDF, API, HTML e NASA são preservadas.
 
-## Correção ortográfica: limitações
+A correção ortográfica usa o dicionário da biblioteca **pyspellchecker** e vocabulários suplementares do projeto em **assets/dictionary_pt_br.txt** e **assets/dictionary_en.txt**. O vocabulário PT-BR inclui formas brasileiras e termos de informática/documentos; o inglês inclui termos de arquivos, pastas, interface e uso técnico. Também é possível informar palavras personalizadas, separadas por vírgula, para que sejam preservadas pelo corretor.
 
-A correção é **opcional, local e baseada em frequência de palavras**, não uma revisão gramatical completa. Ela pode sugerir uma palavra comum no lugar de um nome próprio, nome de pessoa, marca, modelo, sigla não reconhecida, termo técnico ou palavra estrangeira. Por isso:
+A correção é **opcional, local e baseada em palavras**, não uma revisão gramatical. Ela pode sugerir palavras erradas no lugar de nomes próprios, marcas, modelos, siglas não reconhecidas ou termos técnicos. O dicionário português é suplementar ao dicionário português geral; não é uma edição completa e separada exclusivamente de PT-BR. Confira sempre a pré-visualização antes de executar um lote.
 
-- Deixe a opção desativada quando os nomes contiverem muitos nomes próprios, marcas, códigos ou vocabulário específico.
-- Confira a coluna **Novo nome** na pré-visualização antes de executar qualquer lote.
-- O recurso tenta preservar a capitalização original e ignora siglas em maiúsculas e palavras com capitalização interna, mas essas heurísticas não eliminam todos os erros possíveis.
+## Histórico, conflitos e segurança
 
-O corretor utiliza dicionários locais de português e inglês; não consulta um serviço online nem envia nomes de arquivos para terceiros. O dicionário português é geral, não uma edição separada exclusiva para português brasileiro ou europeu, então regionalismos podem gerar sugestões inadequadas. O dicionário é útil para erros ortográficos comuns, mas não decide sozinho se uma palavra está correta no contexto.
+O histórico do último lote fica no arquivo **.renomeador_portable_historico.json**, dentro da pasta raiz selecionada. Um novo lote bem-sucedido substitui o histórico anterior; portanto, só a última operação pode ser desfeita.
 
-## Histórico e proteção contra conflitos
+O programa verifica os caminhos de destino levando em conta renomeações de diretórios e descendentes. As operações são feitas por grupos, começando pelos níveis mais profundos e usando nomes temporários para suportar trocas sem sobrescrever arquivos. Se uma etapa falhar, o programa tenta restaurar os nomes anteriores.
 
-O histórico do último lote é guardado na pasta selecionada, no arquivo `.renomeador_portable_historico.json`. O programa exclui esse arquivo da lista de renomeação. Um novo lote bem-sucedido substitui o histórico anterior; portanto, só o lote mais recente pode ser desfeito.
-
-Antes de renomear, o programa verifica destinos duplicados, nomes reservados do Windows e arquivos ou pastas que já ocupem o destino. A operação é feita em duas fases com nomes temporários para permitir trocas como `a.txt` para `b.txt` e `b.txt` para `a.txt`. Se uma etapa falhar, o programa tenta restaurar os nomes anteriores.
-
-Evite mover, excluir ou renomear manualmente os arquivos entre a renomeação e a opção de desfazer. Como acontece com qualquer alteração de arquivos, mantenha cópias de segurança de dados importantes.
+Evite mover, excluir ou renomear manualmente os itens entre a operação e a opção de desfazer. Como acontece com qualquer alteração de arquivos, mantenha cópias de segurança de dados importantes.
 
 ## Desenvolvimento e testes
 
-A interface é feita com Tkinter; a lógica de arquivos fica em `renamer.py`. O pacote `pyspellchecker` é usado para correção ortográfica opcional e é incluído no executável portátil.
+A interface é feita com Tkinter. A lógica de renomeação está em **renamer.py**. As dependências são declaradas em **requirements.txt**; o GitHub Actions executa os testes e compila o executável Windows incluindo ícone e dicionários.
 
-Para rodar os testes, execute no PowerShell, a partir da pasta do projeto:
+Para executar os testes no PowerShell:
 
     py -m unittest discover -s tests -v
 
-O GitHub Actions executa os testes e empacota o programa como um executável Windows de arquivo único. É possível publicar um Release com o EXE e o ZIP tanto ao enviar uma tag `vMAJOR.MINOR.PATCH` quanto pela opção manual descrita acima.
+A compilação gera um EXE com ícone próprio, além de um ZIP. O workflow também pode publicar um Release via **Run workflow**, sem exigir Git instalado no computador.
 
 ## Licença
 

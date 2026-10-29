@@ -73,7 +73,7 @@ A correção é **opcional, local e baseada em frequência de palavras**, não u
 - Confira a coluna **Novo nome** na pré-visualização antes de executar qualquer lote.
 - O recurso tenta preservar a capitalização original e ignora siglas em maiúsculas e palavras com capitalização interna, mas essas heurísticas não eliminam todos os erros possíveis.
 
-O corretor utiliza dicionários locais de português e inglês; não consulta um serviço online nem envia nomes de arquivos para terceiros. Seu dicionário é útil para erros ortográficos comuns, mas não decide sozinho se uma palavra está correta no contexto.
+O corretor utiliza dicionários locais de português e inglês; não consulta um serviço online nem envia nomes de arquivos para terceiros. O dicionário português é geral, não uma edição separada exclusiva para português brasileiro ou europeu, então regionalismos podem gerar sugestões inadequadas. O dicionário é útil para erros ortográficos comuns, mas não decide sozinho se uma palavra está correta no contexto.
 
 ## Histórico e proteção contra conflitos
 

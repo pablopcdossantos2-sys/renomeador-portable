@@ -164,7 +164,9 @@ class RenamerGUI:
 
         if ensure_icon_assets is not None:
             try:
-                ensure_icon_assets()
+                # O executável já inclui os assets; gere-os apenas ao executar o fonte.
+                if not resource_path("assets/renomeador.png").is_file():
+                    ensure_icon_assets()
             except Exception:
                 # O aplicativo continua funcional se a geração do ícone falhar.
                 pass

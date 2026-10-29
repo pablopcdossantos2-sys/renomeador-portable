@@ -78,6 +78,11 @@ ENGLISH_SMALL_WORDS = {
     "beside", "beyond", "near", "past", "since", "until", "via", "per",
 }
 _WORD_RE = re.compile(r"[^\W\d_]+", flags=re.UNICODE)
+_KNOWN_ACRONYMS = {
+    "AI", "API", "CPU", "CSS", "CSV", "DVD", "GPS", "GPU", "HDMI",
+    "HTML", "HTTP", "HTTPS", "IBM", "NASA", "PDF", "PC", "RAM",
+    "SQL", "SSD", "USB", "URL", "WWW", "XML", "ZIP",
+}
 
 
 def smart_title_case(text: str, language: str = "pt-BR") -> str:
@@ -93,8 +98,8 @@ def smart_title_case(text: str, language: str = "pt-BR") -> str:
         word = match.group()
         lower_word = word.lower()
 
-        # Acrônimos inteiramente em maiúsculas (PDF, API, NASA) são preservados.
-        if word.isupper() and len(word) > 1:
+        # Preserva siglas comuns, sem deixar nomes inteiros em CAIXA ALTA assim.
+        if word.isupper() and word in _KNOWN_ACRONYMS:
             replacement = word
         elif not first_word and lower_word in small_words:
             replacement = lower_word

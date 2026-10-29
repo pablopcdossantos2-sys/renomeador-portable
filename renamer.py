@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 import tempfile
 import uuid
 from dataclasses import dataclass, field
@@ -169,6 +170,19 @@ def _get_spellchecker(language: str, extra_words: tuple[str, ...] = ()):
     code = "en" if is_english else "pt"
     checker = SpellChecker(language=code, distance=1)
     checker.word_frequency.load_words(EN_EXTRA_WORDS if is_english else PT_BR_EXTRA_WORDS)
+    # Dicionário adicional distribuído com o aplicativo.
+    bundle_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
+    dictionary_path = bundle_root / "assets" / ("dictionary_en.txt" if is_english else "dictionary_pt_br.txt")
+    try:
+        words_from_file = [
+            line.strip().lower()
+            for line in dictionary_path.read_text(encoding="utf-8").splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        ]
+        checker.word_frequency.load_words(words_from_file)
+    except OSError:
+        # O vocabulário suplementar embutido no código continua disponível.
+        pass
     checker.word_frequency.load_words([word.lower() for word in extra_words if word.strip()])
     return checker
 

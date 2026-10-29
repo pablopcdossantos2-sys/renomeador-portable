@@ -262,7 +262,9 @@ def transform_filename(filename: str, options: RenameOptions, *, is_directory: b
         stem = stem.upper()
     elif options.case_mode == "minúsculas":
         stem = stem.lower()
-    elif options.case_mode in {"Capitalizar palavras", "Título inteligente (PT-BR)", "Título inteligente (PT-BR/EN)"}:
+    elif options.case_mode == "Título inteligente (PT-BR)":
+        stem = smart_title_case(stem, "pt-BR")
+    elif options.case_mode in {"Capitalizar palavras", "Título inteligente (PT-BR/EN)"}:
         language = "en" if options.spell_language.lower() == "english" else "pt-BR"
         stem = smart_title_case(stem, language)
     elif options.case_mode == "Title Case (English)":

@@ -35,7 +35,7 @@ jobs:
       - name: Testar geração do ícone
         run: |
           python create_icon.py
-          python -c "from PIL import Image; im=Image.open('assets/renomeador.png'); assert im.size == (64, 64); Image.open('assets/renomeador.ico').verify()"
+          python -c "from PIL import Image; im=Image.open('assets/renomeador.png'); assert im.size == (48, 48); Image.open('assets/renomeador.ico').verify()"
       - name: Executar testes
         run: python -m unittest discover -s tests -v
 

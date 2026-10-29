@@ -355,7 +355,7 @@ class RenamerGUI:
         )
         self.logo_label = logo_label
         if self.app_icon_photo is not None:
-            logo_label.configure(image=self.app_icon_photo, text="", width=56, height=56)
+            logo_label.configure(image=self.app_icon_photo, text="")
             logo_label.image = self.app_icon_photo
         logo_label.pack(side="left", padx=(14, 12), pady=10)
         heading = self._tk_frame(header, "header",)

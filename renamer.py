@@ -165,24 +165,41 @@ def _get_spellchecker(language: str, extra_words: tuple[str, ...] = ()):
             "Instale as dependências com: py -m pip install -r requirements.txt"
         ) from error
 
-    normalized = language.strip().lower()
+    normalized = language.strip().lower().replace("–", "-")
+    is_bilingual = normalized in {
+        "português + english", "portugues + english", "português + inglês",
+        "portugues + ingles", "português e inglês", "portugues e ingles",
+        "pt+en", "pt-br/en", "bilingual", "bilíngue", "bilingue",
+    }
     is_english = normalized in {"en", "english", "inglês", "ingles"}
-    code = "en" if is_english else "pt"
-    checker = SpellChecker(language=code, distance=1)
-    checker.word_frequency.load_words(EN_EXTRA_WORDS if is_english else PT_BR_EXTRA_WORDS)
-    # Dicionário adicional distribuído com o aplicativo.
+    languages = ["pt", "en"] if is_bilingual else (["en"] if is_english else ["pt"])
+    checker = SpellChecker(language=languages, distance=1)
+
+    if is_bilingual:
+        checker.word_frequency.load_words(PT_BR_EXTRA_WORDS | EN_EXTRA_WORDS)
+        dictionary_names = ("dictionary_pt_br.txt", "dictionary_en.txt")
+    elif is_english:
+        checker.word_frequency.load_words(EN_EXTRA_WORDS)
+        dictionary_names = ("dictionary_en.txt",)
+    else:
+        checker.word_frequency.load_words(PT_BR_EXTRA_WORDS)
+        dictionary_names = ("dictionary_pt_br.txt",)
+
+    # Carrega o(s) vocabulário(s) suplementar(es) distribuído(s) com o aplicativo.
     bundle_root = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
-    dictionary_path = bundle_root / "assets" / ("dictionary_en.txt" if is_english else "dictionary_pt_br.txt")
-    try:
-        words_from_file = [
-            line.strip().lower()
-            for line in dictionary_path.read_text(encoding="utf-8").splitlines()
-            if line.strip() and not line.lstrip().startswith("#")
-        ]
-        checker.word_frequency.load_words(words_from_file)
-    except OSError:
-        # O vocabulário suplementar embutido no código continua disponível.
-        pass
+    for dictionary_name in dictionary_names:
+        dictionary_path = bundle_root / "assets" / dictionary_name
+        try:
+            words_from_file = [
+                line.strip().lower()
+                for line in dictionary_path.read_text(encoding="utf-8").splitlines()
+                if line.strip() and not line.lstrip().startswith("#")
+            ]
+            checker.word_frequency.load_words(words_from_file)
+        except OSError:
+            # O vocabulário suplementar embutido no código continua disponível.
+            pass
+
     checker.word_frequency.load_words([word.lower() for word in extra_words if word.strip()])
     return checker
 
@@ -208,6 +225,14 @@ def correct_spelling(
             return word
         if word.isupper() or any(char.isupper() for char in word[1:]):
             return word
+        # Em modo multilíngue, qualquer termo reconhecido por um dos dicionários
+        # deve ser preservado, em vez de "corrigido" para uma palavra da outra língua.
+        try:
+            if word.lower() in checker:
+                return word
+        except (TypeError, AttributeError):
+            # Mantém compatibilidade com checkers simples usados por terceiros/testes.
+            pass
 
         suggestion = checker.correction(word.lower())
         if not suggestion or not suggestion.isalpha() or suggestion.lower() == word.lower():
@@ -238,16 +263,19 @@ def transform_filename(filename: str, options: RenameOptions, *, is_directory: b
         else:
             stem = stem.replace(term, "")
 
-    if options.replace_from:
+    # Desconsidera espaços acidentais nas extremidades do campo de busca.
+    # O texto de destino continua livre para conter espaços ou ficar vazio.
+    replace_from = options.replace_from.strip()
+    if replace_from:
         if options.ignore_case:
             stem = re.sub(
-                re.escape(options.replace_from),
+                re.escape(replace_from),
                 lambda _match: options.replace_to,
                 stem,
                 flags=re.IGNORECASE,
             )
         else:
-            stem = stem.replace(options.replace_from, options.replace_to)
+            stem = stem.replace(replace_from, options.replace_to)
 
     stem = re.sub(r"\s+", " ", stem).strip()
     stem = options.prefix + stem

@@ -360,8 +360,13 @@ def evaluate_plan(folder: str | os.PathLike[str], items: list[RenameItem]) -> li
     return items
 
 
-def create_plan(folder: str | os.PathLike[str], options: RenameOptions) -> list[RenameItem]:
-    """Monta a prévia recursiva de arquivos e pastas, sem seguir links simbólicos."""
+def create_plan(
+    folder: str | os.PathLike[str],
+    options: RenameOptions,
+    *,
+    recursive: bool = True,
+) -> list[RenameItem]:
+    """Monta a prévia de arquivos e pastas, com opção de incluir toda a árvore."""
     root = Path(folder)
     if not root.is_dir():
         raise ValueError("Selecione uma pasta válida.")
@@ -369,11 +374,12 @@ def create_plan(folder: str | os.PathLike[str], options: RenameOptions) -> list[
     candidates: list[tuple[Path, bool]] = []
     for current, dirnames, filenames in os.walk(root, topdown=True, followlinks=False):
         base = Path(current)
-        dirnames[:] = sorted(
+        found_dirs = sorted(
             name for name in dirnames
             if not _is_internal_file(name) and not (base / name).is_symlink()
         )
-        for name in dirnames:
+        dirnames[:] = found_dirs if recursive else ([] if base == root else found_dirs)
+        for name in found_dirs:
             path = base / name
             candidates.append((path, True))
         for name in sorted(filenames, key=str.casefold):

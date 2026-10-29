@@ -1,1 +1,2 @@
 pyspellchecker==0.9.1
+Pillow>=10.0.0

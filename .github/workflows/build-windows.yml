@@ -1,0 +1,64 @@
+name: Testes e executável Windows
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  tests:
+    name: Testes Python
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verificar sintaxe
+        run: python -m compileall -q main.py renamer.py tests
+      - name: Executar testes
+        run: python -m unittest discover -s tests -v
+
+  build-windows:
+    name: Compilar aplicativo portátil
+    runs-on: windows-latest
+    needs: tests
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Instalar empacotador
+        run: python -m pip install --upgrade pip pyinstaller
+      - name: Gerar executável
+        run: python -m PyInstaller --noconfirm --clean --onefile --windowed --name RenomeadorPortable main.py
+      - name: Preparar pacote ZIP
+        shell: pwsh
+        run: |
+          Copy-Item README.md dist\README.md
+          Compress-Archive -Path dist\RenomeadorPortable.exe,dist\README.md -DestinationPath dist\RenomeadorPortable.zip -Force
+      - name: Disponibilizar downloads
+        uses: actions/upload-artifact@v4
+        with:
+          name: RenomeadorPortable-Windows
+          path: |
+            dist/RenomeadorPortable.exe
+            dist/RenomeadorPortable.zip
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publicar Release ao enviar uma tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: gh release create "$env:GITHUB_REF_NAME" dist\RenomeadorPortable.exe dist\RenomeadorPortable.zip --title "$env:GITHUB_REF_NAME" --generate-notes

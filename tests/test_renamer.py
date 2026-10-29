@@ -16,6 +16,33 @@ from renamer import (
     validate_filename,
 )
 
+from main import PALETTES, _frame_background_color
+
+
+class PaletteRoleTests(unittest.TestCase):
+    def test_header_role_maps_to_navy_for_both_themes(self):
+        for theme in ("Escuro", "Claro"):
+            with self.subTest(theme=theme):
+                self.assertEqual(
+                    _frame_background_color(PALETTES[theme], "header"),
+                    PALETTES[theme]["navy"],
+                )
+
+    def test_accent_role_maps_to_blue(self):
+        for theme in ("Escuro", "Claro"):
+            with self.subTest(theme=theme):
+                self.assertEqual(
+                    _frame_background_color(PALETTES[theme], "accent"),
+                    PALETTES[theme]["blue"],
+                )
+
+    def test_unknown_role_falls_back_to_app_background(self):
+        palette = PALETTES["Escuro"]
+        self.assertEqual(
+            _frame_background_color(palette, "role-not-configured"),
+            palette["app"],
+        )
+
 
 class FakeChecker:
     def __init__(self, mapping):

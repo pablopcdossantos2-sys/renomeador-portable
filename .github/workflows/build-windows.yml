@@ -7,6 +7,12 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      release_version:
+        description: "Versão para publicar, por exemplo v0.1.0 (deixe vazio para apenas gerar o executável)"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -62,3 +68,14 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
         run: gh release create "$env:GITHUB_REF_NAME" dist\RenomeadorPortable.exe dist\RenomeadorPortable.zip --title "$env:GITHUB_REF_NAME" --generate-notes
+      - name: Publicar Release a partir de execução manual
+        if: github.event_name == 'workflow_dispatch' && inputs.release_version != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_VERSION: ${{ inputs.release_version }}
+        shell: pwsh
+        run: |
+          if ($env:RELEASE_VERSION -notmatch '^v\d+\.\d+\.\d+$') {
+            throw "Informe a versão no formato vMAJOR.MINOR.PATCH, por exemplo v0.1.0."
+          }
+          gh release create "$env:RELEASE_VERSION" dist\RenomeadorPortable.exe dist\RenomeadorPortable.zip --target main --title "$env:RELEASE_VERSION" --generate-notes

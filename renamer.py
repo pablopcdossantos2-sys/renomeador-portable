@@ -10,6 +10,7 @@ import re
 import tempfile
 import uuid
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Iterable
 
@@ -28,6 +29,8 @@ class RenameOptions:
     suffix: str = ""
     case_mode: str = "Manter"
     ignore_case: bool = False
+    spellcheck: bool = False
+    spell_language: str = "Português (Brasil)"
 
 
 @dataclass
@@ -56,6 +59,97 @@ def validate_filename(filename: str) -> str | None:
     if re.fullmatch(r"(CON|PRN|AUX|NUL|COM[1-9¹²³]|LPT[1-9¹²³])", device_name):
         return f'"{device_name}" é um nome reservado pelo Windows.'
     return None
+
+
+PORTUGUESE_SMALL_WORDS = {
+    "a", "as", "o", "os", "um", "uns", "uma", "umas",
+    "de", "da", "das", "do", "dos", "e", "em", "no", "na", "nos", "nas",
+    "num", "numa", "nuns", "numas", "dum", "duma", "duns", "dumas",
+    "ao", "aos", "à", "às", "pelo", "pela", "pelos", "pelas",
+    "por", "para", "com", "sem", "sob", "sobre", "entre", "até",
+    "após", "perante", "contra", "desde", "durante", "que", "se",
+}
+ENGLISH_SMALL_WORDS = {
+    "a", "an", "the", "and", "but", "or", "nor", "for", "so", "yet",
+    "as", "at", "by", "to", "of", "in", "on", "up", "off", "out",
+    "over", "under", "after", "before", "between", "into", "through",
+    "during", "without", "within", "with", "from", "about", "around",
+    "against", "among", "along", "across", "behind", "below", "beneath",
+    "beside", "beyond", "near", "past", "since", "until", "via", "per",
+}
+_WORD_RE = re.compile(r"[^\W\d_]+", flags=re.UNICODE)
+
+
+def smart_title_case(text: str, language: str = "pt-BR") -> str:
+    """Aplica capitalização de títulos, deixando conectivos em minúsculas."""
+    code = language.lower()
+    small_words = ENGLISH_SMALL_WORDS if code in {"en", "en-us", "english", "inglês", "ingles"} else PORTUGUESE_SMALL_WORDS
+    output: list[str] = []
+    cursor = 0
+    first_word = True
+
+    for match in _WORD_RE.finditer(text):
+        output.append(text[cursor:match.start()])
+        word = match.group()
+        lower_word = word.lower()
+
+        # Acrônimos inteiramente em maiúsculas (PDF, API, NASA) são preservados.
+        if word.isupper() and len(word) > 1:
+            replacement = word
+        elif not first_word and lower_word in small_words:
+            replacement = lower_word
+        else:
+            replacement = lower_word[:1].upper() + lower_word[1:]
+
+        output.append(replacement)
+        cursor = match.end()
+        first_word = False
+
+    output.append(text[cursor:])
+    return "".join(output)
+
+
+@lru_cache(maxsize=2)
+def _get_spellchecker(language: str):
+    """Carrega uma única instância local por idioma."""
+    try:
+        from spellchecker import SpellChecker
+    except ImportError as error:
+        raise RuntimeError(
+            "A correção ortográfica precisa do pacote pyspellchecker. "
+            "Instale as dependências com: py -m pip install -r requirements.txt"
+        ) from error
+
+    normalized = language.strip().lower()
+    code = "en" if normalized in {"en", "english", "inglês", "ingles"} else "pt"
+    return SpellChecker(language=code, distance=1)
+
+
+def correct_spelling(text: str, language: str = "Português (Brasil)", checker=None) -> str:
+    """Corrige palavras de forma local, tentando preservar a capitalização original.
+
+    Palavras curtas, siglas e tokens com capitalização interna são preservados.
+    Nomes próprios podem ser confundidos com palavras comuns; por isso, o recurso
+    é opcional e seus resultados devem ser conferidos na pré-visualização.
+    """
+    if checker is None:
+        checker = _get_spellchecker(language)
+
+    def replace_word(match: re.Match[str]) -> str:
+        word = match.group()
+        if len(word) < 4:
+            return word
+        if word.isupper() or (any(char.isupper() for char in word[1:])):
+            return word
+
+        suggestion = checker.correction(word.lower())
+        if not suggestion or not suggestion.isalpha() or suggestion.lower() == word.lower():
+            return word
+        if word[0].isupper():
+            return suggestion[0].upper() + suggestion[1:].lower()
+        return suggestion.lower()
+
+    return re.sub(r"[^\W\d_]{4,}", replace_word, text, flags=re.UNICODE)
 
 
 def transform_filename(filename: str, options: RenameOptions) -> str:
@@ -91,12 +185,19 @@ def transform_filename(filename: str, options: RenameOptions) -> str:
     if options.suffix:
         stem += options.suffix
 
+    # A extensão não passa pela correção ortográfica nem pela capitalização.
+    if options.spellcheck:
+        stem = correct_spelling(stem, options.spell_language)
+    stem = re.sub(r"\s+", " ", stem).strip()
+
     if options.case_mode == "MAIÚSCULAS":
         stem = stem.upper()
     elif options.case_mode == "minúsculas":
         stem = stem.lower()
-    elif options.case_mode == "Capitalizar palavras":
-        stem = stem.title()
+    elif options.case_mode in {"Capitalizar palavras", "Título inteligente (PT-BR)"}:
+        stem = smart_title_case(stem, "pt-BR")
+    elif options.case_mode == "Title Case (English)":
+        stem = smart_title_case(stem, "en")
 
     stem = re.sub(r"\s+", " ", stem).strip()
     return stem + extension

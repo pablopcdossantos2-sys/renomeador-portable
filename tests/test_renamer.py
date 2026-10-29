@@ -25,7 +25,7 @@ class TransformTests(unittest.TestCase):
         )
         self.assertEqual(
             transform_filename("ABC meu draft xx.pdf", options),
-            "Projeto meu final  revisto.pdf".replace("  ", " "),
+            "Projeto meu final revisto.pdf",
         )
 
     def test_case_insensitive_replacement(self):
@@ -79,9 +79,9 @@ class FileOperationTests(unittest.TestCase):
             folder = Path(temp)
             (folder / "one photo.jpg").write_text("1", encoding="utf-8")
             (folder / "two photo.jpg").write_text("2", encoding="utf-8")
-            plan = create_plan(folder, RenameOptions(replace_from="one ", replace_to=""))
+            plan = create_plan(folder, RenameOptions(remove_terms=["one ", "two "]))
             self.assertEqual(len(plan), 2)
-            self.assertTrue(any(item.error for item in plan))
+            self.assertTrue(all(item.error for item in plan))
 
     def test_history_file_is_not_included_in_plan(self):
         with tempfile.TemporaryDirectory() as temp:

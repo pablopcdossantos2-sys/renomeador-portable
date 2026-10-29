@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+build/
+dist/
+*.spec
+.renomeador_portable_historico.json
+.renomeador_portable_historico.json.*.tmp

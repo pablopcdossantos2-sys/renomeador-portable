@@ -59,10 +59,9 @@ class ScrollableFrame(ttk.Frame):
 
         self.inner.bind("<Configure>", self._update_scrollregion)
         self.canvas.bind("<Configure>", self._resize_inner)
-        self.canvas.bind("<Enter>", self._bind_mousewheel)
-        self.canvas.bind("<Leave>", self._unbind_mousewheel)
-        self.inner.bind("<Enter>", self._bind_mousewheel)
-        self.inner.bind("<Leave>", self._unbind_mousewheel)
+        # O binding global é filtrado pelo widget sob o cursor, assim a roda
+        # não interfere na tabela de resultados nem no registro de operações.
+        self.bind_all("<MouseWheel>", self._on_mousewheel)
 
     def _update_scrollregion(self, _event=None) -> None:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
@@ -70,14 +69,12 @@ class ScrollableFrame(ttk.Frame):
     def _resize_inner(self, event) -> None:
         self.canvas.itemconfigure(self.window_id, width=event.width)
 
-    def _bind_mousewheel(self, _event=None) -> None:
-        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
-
-    def _unbind_mousewheel(self, _event=None) -> None:
-        self.canvas.unbind_all("<MouseWheel>")
-
     def _on_mousewheel(self, event) -> None:
-        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        widget = self.winfo_containing(event.x_root, event.y_root)
+        while widget is not None and widget is not self:
+            widget = getattr(widget, "master", None)
+        if widget is self:
+            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
 
 class RenamerGUI:

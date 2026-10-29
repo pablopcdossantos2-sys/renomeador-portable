@@ -7,7 +7,11 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
-from create_icon import ensure_icon_assets
+try:
+    from create_icon import ensure_icon_assets
+except ImportError:
+    ensure_icon_assets = None
+
 from renamer import (
     RenameItem,
     RenameOptions,
@@ -158,11 +162,12 @@ class RenamerGUI:
         self.change_count_var = tk.StringVar(value="0 selecionados")
         self.conflict_count_var = tk.StringVar(value="0 conflitos")
 
-        try:
-            ensure_icon_assets()
-        except Exception:
-            # O aplicativo continua funcional mesmo sem suporte gráfico do Pillow.
-            pass
+        if ensure_icon_assets is not None:
+            try:
+                ensure_icon_assets()
+            except Exception:
+                # O aplicativo continua funcional se a geração do ícone falhar.
+                pass
 
         self._configure_styles()
         self._build_ui()
@@ -232,6 +237,7 @@ class RenamerGUI:
         style.configure("Hint.TLabel", background=p["surface"], foreground=p["muted"], font=("Segoe UI", 9))
         style.configure("Field.TLabel", background=p["surface"], foreground=p["ink"], font=("Segoe UI", 9, "bold"))
         style.configure("AppText.TLabel", background=p["app"], foreground=p["muted"], font=("Segoe UI", 9))
+        style.configure("AppTitle.TLabel", background=p["app"], foreground=p["ink"], font=("Segoe UI", 12, "bold"))
         style.configure("TButton", font=("Segoe UI", 9), padding=(10, 7), background=p["surface_alt"], foreground=p["ink"], borderwidth=0)
         style.map("TButton", background=[("active", p["blue_soft"]), ("disabled", p["surface_alt"])])
         style.configure("Primary.TButton", font=("Segoe UI", 10, "bold"), padding=(14, 9), background=p["blue"], foreground=p["white"])
@@ -408,8 +414,7 @@ class RenamerGUI:
         left_intro = ttk.Frame(left_panel, style="App.TFrame")
         left_intro.grid(row=0, column=0, sticky="ew", pady=(0, 8))
         ttk.Label(left_intro, text="ETAPA 2", style="Eyebrow.TLabel").pack(anchor="w")
-        ttk.Label(left_intro, text="Regras de renomeação", font=("Segoe UI", 12, "bold"),
-                  background=p["app"], foreground=p["ink"]).pack(anchor="w", pady=(2, 0))
+        ttk.Label(left_intro, text="Regras de renomeação", style="AppTitle.TLabel").pack(anchor="w", pady=(2, 0))
         ttk.Label(left_intro, text="Combine somente as opções de que precisa.", style="AppText.TLabel").pack(anchor="w", pady=(2, 0))
 
         scroller = ScrollableFrame(left_panel, self, style="App.TFrame")

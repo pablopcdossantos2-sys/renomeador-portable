@@ -26,7 +26,7 @@ O aplicativo trabalha somente com arquivos diretamente dentro da pasta escolhida
 
 O executável não exige uma instalação tradicional nem Python instalado. O Windows pode exibir um aviso de segurança para programas baixados da internet; confira se o arquivo foi baixado deste repositório antes de optar por executá-lo.
 
-Quando uma versão for publicada na seção **Releases**, também será possível baixar o executável e um ZIP contendo o programa e este README.
+Para publicar uma versão sem instalar Git no computador: abra **Actions → Testes e executável Windows → Run workflow**, selecione a branch main e informe uma versão como v0.1.0 no campo de versão. Deixe o campo vazio para apenas gerar o executável. Após a execução bem-sucedida, a versão será publicada em **Releases** com o EXE e o ZIP.
 
 ### Opção 2 — Executar o código-fonte
 
@@ -65,7 +65,7 @@ Para rodar os testes, execute no PowerShell, a partir da pasta do projeto:
 
     py -m unittest discover -s tests -v
 
-O GitHub Actions executa os testes e empacota o programa como um executável Windows de arquivo único. Ao publicar uma tag como v0.1.0, o fluxo também prepara um Release com o EXE e o ZIP.
+O GitHub Actions executa os testes e empacota o programa como um executável Windows de arquivo único. É possível publicar um Release com o EXE e o ZIP tanto ao enviar uma tag vMAJOR.MINOR.PATCH quanto pela opção manual descrita acima.
 
 ## Licença
 

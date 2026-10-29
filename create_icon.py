@@ -67,7 +67,7 @@ def ensure_icon_assets() -> tuple[Path, Path]:
     png_path = ASSET_DIR / "renomeador.png"
     ico_path = ASSET_DIR / "renomeador.ico"
     # A imagem PNG é usada pelo Tkinter na barra de título; mantenha-a pequena.
-    base.resize((64, 64), Image.Resampling.LANCZOS).save(png_path, format="PNG", optimize=True)
+    base.resize((48, 48), Image.Resampling.LANCZOS).save(png_path, format="PNG", optimize=True)
     # O ICO contém vários tamanhos para Explorador, barra de tarefas e atalhos.
     sizes = [16, 24, 32, 48, 64, 128, 256]
     base.save(ico_path, format="ICO", sizes=[(size, size) for size in sizes])

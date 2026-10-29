@@ -84,6 +84,12 @@ def resource_path(relative: str) -> Path:
     return base / relative
 
 
+def _frame_background_color(palette: dict[str, str], role: str) -> str:
+    """Resolve os papéis visuais da interface para uma cor válida da paleta."""
+    palette_key = {"header": "navy", "header_text": "navy", "accent": "blue"}.get(role, role)
+    return palette.get(palette_key, palette["app"])
+
+
 class ScrollableFrame(ttk.Frame):
     """Área de regras rolável para se adaptar a telas e janelas menores."""
 
@@ -194,7 +200,7 @@ class RenamerGUI:
         return widget
 
     def _tk_frame(self, parent, role: str, **kwargs) -> tk.Frame:
-        widget = tk.Frame(parent, bg=self.palette[role], **kwargs)
+        widget = tk.Frame(parent, bg=_frame_background_color(self.palette, role), **kwargs)
         self.theme_widgets[widget] = role
         return widget
 

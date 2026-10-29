@@ -7,6 +7,7 @@ import tkinter as tk
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
+from create_icon import ensure_icon_assets
 from renamer import (
     RenameItem,
     RenameOptions,
@@ -157,13 +158,18 @@ class RenamerGUI:
         self.change_count_var = tk.StringVar(value="0 selecionados")
         self.conflict_count_var = tk.StringVar(value="0 conflitos")
 
+        try:
+            ensure_icon_assets()
+        except Exception:
+            # O aplicativo continua funcional mesmo sem suporte gráfico do Pillow.
+            pass
+
         self._configure_styles()
         self._build_ui()
         self._apply_tk_theme()
         self.search_var.trace_add("write", lambda *_: self._render_plan())
         self.filter_var.trace_add("write", lambda *_: self._render_plan())
         self.root.bind("<Control-Return>", lambda _event: self.preview())
-        self.root.bind("<space>", self._on_space)
         self._set_application_icon()
         self._log("Bem-vindo! Selecione uma pasta, configure as regras e clique em Pré-visualizar.")
 
@@ -252,6 +258,14 @@ class RenamerGUI:
         for widget, role in list(self.theme_widgets.items()):
             try:
                 if not widget.winfo_exists():
+                    continue
+                if isinstance(widget, (tk.Frame, tk.Canvas)):
+                    if role in {"header", "header_text"}:
+                        widget.configure(bg=p["navy"])
+                    elif role == "accent":
+                        widget.configure(bg=p["blue"])
+                    elif role == "app":
+                        widget.configure(bg=p["app"])
                     continue
                 if role in {"header", "header_text", "header_title", "header_subtitle"}:
                     bg = p["navy"]
@@ -524,6 +538,7 @@ class RenamerGUI:
         self.preview_tree.tag_configure("changed", foreground=p["green"])
         self.preview_tree.tag_configure("alternate", background=p["row_alt"])
         self.preview_tree.bind("<Button-1>", self._on_tree_click)
+        self.preview_tree.bind("<space>", self._on_space)
 
         select_row = ttk.Frame(preview_card, style="CardInner.TFrame")
         select_row.grid(row=3, column=0, sticky="ew", pady=(8, 0))
@@ -799,7 +814,7 @@ class RenamerGUI:
         row = self.preview_tree.identify_row(event.y)
         if region == "cell" and column == "#1" and row in self.item_by_iid:
             item = self.item_by_iid[row]
-            if item.changed and not item.error:
+            if item.changed:
                 item.selected = not item.selected
                 if self.current_folder:
                     evaluate_plan(self.current_folder, self.current_items)
@@ -811,7 +826,7 @@ class RenamerGUI:
         selection = self.preview_tree.selection() if hasattr(self, "preview_tree") else ()
         if selection and selection[0] in self.item_by_iid:
             item = self.item_by_iid[selection[0]]
-            if item.changed and not item.error:
+            if item.changed:
                 item.selected = not item.selected
                 if self.current_folder:
                     evaluate_plan(self.current_folder, self.current_items)

@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from renamer import (
+    _get_spellchecker,
     HISTORY_FILENAME,
     RenameOptions,
     apply_renames,
@@ -45,8 +46,12 @@ class PaletteRoleTests(unittest.TestCase):
 
 
 class FakeChecker:
-    def __init__(self, mapping):
+    def __init__(self, mapping, known_words=()):
         self.mapping = mapping
+        self.known_words = {word.lower() for word in known_words}
+
+    def __contains__(self, word):
+        return word.lower() in self.known_words
 
     def correction(self, word):
         return self.mapping.get(word, word)
@@ -75,6 +80,36 @@ class TransformTests(unittest.TestCase):
             case_mode="MAIÚSCULAS",
         )
         self.assertEqual(transform_filename("Relatorio mensal.docx", options), "RESUMO MENSAL.docx")
+
+    def test_text_replacement_changes_filename_and_preserves_extension(self):
+        options = RenameOptions(
+            replace_from="draft",
+            replace_to="final",
+            case_mode="Manter",
+        )
+        self.assertEqual(
+            transform_filename("Project draft notes.PDF", options),
+            "Project final notes.PDF",
+        )
+
+    def test_text_replacement_trims_outer_spaces_from_search_term(self):
+        options = RenameOptions(
+            replace_from="  draft  ",
+            replace_to="final",
+            case_mode="Manter",
+        )
+        self.assertEqual(
+            transform_filename("Project draft notes.pdf", options),
+            "Project final notes.pdf",
+        )
+
+    def test_text_replacement_can_remove_match_when_destination_is_empty(self):
+        options = RenameOptions(replace_from="_draft", replace_to="", case_mode="Manter")
+        self.assertEqual(transform_filename("report_draft.pdf", options), "report.pdf")
+
+    def test_text_replacement_is_literal_and_case_sensitive_by_default(self):
+        options = RenameOptions(replace_from="a.c", replace_to="X", case_mode="Manter")
+        self.assertEqual(transform_filename("a.c AC axc.pdf", options), "X AC axc.pdf")
 
     def test_smart_portuguese_title_case_keeps_short_words_lowercase(self):
         options = RenameOptions(case_mode="Título inteligente (PT-BR)")
@@ -116,6 +151,15 @@ class TransformTests(unittest.TestCase):
             correct_spelling("relatorio Recieve API iPhone", checker=checker),
             "relatório Receive API iPhone",
         )
+
+    def test_spell_correction_preserves_known_words_in_any_loaded_language(self):
+        checker = FakeChecker({"folder": "folded"}, known_words={"folder"})
+        self.assertEqual(correct_spelling("folder", checker=checker), "folder")
+
+    def test_combined_dictionary_contains_portuguese_and_english_words(self):
+        checker = _get_spellchecker("Português + English")
+        self.assertIn("arquivo", checker)
+        self.assertIn("computer", checker)
 
     def test_spell_correction_is_not_applied_unless_enabled(self):
         options = RenameOptions(case_mode="Manter", spellcheck=False)

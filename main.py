@@ -372,7 +372,7 @@ class RenamerGUI:
         try:
             fresh_plan = create_plan(folder, self._get_options() or RenameOptions())
             self._show_plan(fresh_plan)
-        except OSError:
+        except (OSError, RuntimeError):
             pass
 
 

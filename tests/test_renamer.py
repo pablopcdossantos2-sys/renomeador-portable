@@ -6,11 +6,13 @@ from renamer import (
     HISTORY_FILENAME,
     RenameOptions,
     apply_renames,
+    apply_recursive_renames,
     correct_spelling,
     create_plan,
     smart_title_case,
     transform_filename,
     undo_last_renaming,
+    evaluate_plan,
     validate_filename,
 )
 
@@ -81,6 +83,69 @@ class TransformTests(unittest.TestCase):
     def test_spell_correction_is_not_applied_unless_enabled(self):
         options = RenameOptions(case_mode="Manter", spellcheck=False)
         self.assertEqual(transform_filename("relatorio.pdf", options), "relatorio.pdf")
+
+
+    def test_directory_names_do_not_preserve_dot_suffix_as_extension(self):
+        options = RenameOptions(prefix="Novo ")
+        self.assertEqual(
+            transform_filename("projeto.final", options, is_directory=True),
+            "Novo projeto.final",
+        )
+
+    def test_recursive_plan_includes_subfolders_and_files(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            nested = root / "Relatorios"
+            nested.mkdir()
+            (nested / "relatorio.txt").write_text("x", encoding="utf-8")
+            plan = create_plan(root, RenameOptions(prefix="Novo "))
+            paths = {item.relative_path for item in plan}
+            self.assertIn("Relatorios", paths)
+            self.assertIn("Relatorios/relatorio.txt", paths)
+
+    def test_recursive_rename_directory_and_child_file_can_be_undone(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            folder = root / "Relatorios"
+            folder.mkdir()
+            (folder / "arquivo.txt").write_text("conteúdo", encoding="utf-8")
+
+            count = apply_recursive_renames(
+                root,
+                [
+                    ("Relatorios", "Documentos"),
+                    ("Relatorios/arquivo.txt", "relatorio.txt"),
+                ],
+            )
+            self.assertEqual(count, 2)
+            self.assertTrue((root / "Documentos" / "relatorio.txt").is_file())
+
+            undone, warning = undo_last_renaming(root)
+            self.assertEqual(undone, 2)
+            self.assertIsNone(warning)
+            self.assertEqual(
+                (root / "Relatorios" / "arquivo.txt").read_text(encoding="utf-8"),
+                "conteúdo",
+            )
+
+    def test_unselected_directory_does_not_rename_but_selected_child_does(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            folder = root / "Relatorios"
+            folder.mkdir()
+            (folder / "arquivo.txt").write_text("x", encoding="utf-8")
+            items = create_plan(root, RenameOptions(prefix="Novo "))
+            by_path = {item.relative_path: item for item in items}
+            by_path["Relatorios"].selected = False
+            evaluate_plan(root, items)
+            selected_moves = [
+                (item.relative_path, item.proposed)
+                for item in items
+                if item.selected and item.changed and not item.error
+            ]
+            apply_recursive_renames(root, selected_moves)
+            self.assertTrue((root / "Relatorios" / "Novo arquivo.txt").is_file())
+            self.assertFalse((root / "Novo Relatorios").exists())
 
     def test_validation_rejects_windows_reserved_names(self):
         self.assertIsNotNone(validate_filename("CON.txt"))

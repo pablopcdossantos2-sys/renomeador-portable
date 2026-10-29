@@ -47,7 +47,7 @@ Quando uma versão for publicada na seção **Releases**, também será possíve
 
 O atalho **Ctrl + Enter** abre a pré-visualização.
 
-**Exemplo:** para converter 2024_relatorio final.pdf em Relatorio final.pdf, use **Do início = 5** e **Capitalizar palavras**.
+**Exemplo:** para converter 2024_relatorio final.pdf em Relatorio Final.pdf, use **Do início = 5** e **Capitalizar palavras**.
 
 ## Histórico e proteção contra conflitos
 

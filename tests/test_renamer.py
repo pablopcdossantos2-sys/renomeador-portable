@@ -56,6 +56,16 @@ class TransformTests(unittest.TestCase):
             "O Senhor da Casa de Pedro.pdf",
         )
 
+    def test_explicit_portuguese_title_case_ignores_spellcheck_language(self):
+        options = RenameOptions(
+            case_mode="Título inteligente (PT-BR)",
+            spell_language="English",
+        )
+        self.assertEqual(
+            transform_filename("A CASA DE PEDRO.txt", options),
+            "A Casa de Pedro.txt",
+        )
+
     def test_legacy_title_case_uses_smart_portuguese_rules(self):
         options = RenameOptions(case_mode="Capitalizar palavras")
         self.assertEqual(
@@ -91,6 +101,19 @@ class TransformTests(unittest.TestCase):
             transform_filename("projeto.final", options, is_directory=True),
             "Novo projeto.final",
         )
+
+    def test_nonrecursive_plan_still_lists_first_level_folders(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            nested = root / "Folder"
+            nested.mkdir()
+            (nested / "child.txt").write_text("x", encoding="utf-8")
+            (root / "root.txt").write_text("y", encoding="utf-8")
+            plan = create_plan(root, RenameOptions(prefix="Novo "), recursive=False)
+            paths = {item.relative_path for item in plan}
+            self.assertIn("Folder", paths)
+            self.assertIn("root.txt", paths)
+            self.assertNotIn("Folder/child.txt", paths)
 
     def test_recursive_plan_includes_subfolders_and_files(self):
         with tempfile.TemporaryDirectory() as temp:

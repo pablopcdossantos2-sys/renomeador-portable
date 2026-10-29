@@ -477,13 +477,9 @@ class RenamerGUI:
         )
 
         formatting = self._rule_card(rules, "Formatação e idioma")
-        self._field(formatting, "Capitalização", self.case_var)
-        case_combo = formatting.winfo_children()[-1]
-        case_combo.configure(
-            state="readonly",
+        ttk.Label(formatting, text="Capitalização", style="Field.TLabel").pack(
+            anchor="w", pady=(0, 4)
         )
-        # Replace the generic entry above with the intended read-only selector.
-        case_combo.destroy()
         ttk.Combobox(
             formatting,
             textvariable=self.case_var,

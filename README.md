@@ -6,7 +6,9 @@ Aplicativo portátil para Windows que renomeia arquivos e pastas em lote, com pr
 
 - Renomeia arquivos, pastas e subpastas, incluindo os arquivos dentro delas.
 - Permite incluir ou limitar a análise aos itens diretamente dentro da pasta escolhida.
-- Permite marcar/desmarcar na prévia os itens que deseja renomear, com ações de seleção em lote, inversão e filtros.
+- Permite marcar/desmarcar na prévia os itens que deseja renomear, com ações de seleção em lote, inversão, filtros e ordenação por coluna.
+- Oferece menu de contexto na prévia para copiar caminhos, comparar nomes e abrir a pasta do item.
+- Mostra quantas regras estão ativas e permite limpar todas de uma vez.
 - Mostra o caminho atual e o caminho proposto, o tipo do item e os conflitos antes de executar.
 - Abre maximizado por padrão no Windows.
 - Alterna entre os modos **Claro** e **Escuro**.
@@ -19,7 +21,7 @@ Aplicativo portátil para Windows que renomeia arquivos e pastas em lote, com pr
 - Detecta nomes inválidos, destinos ocupados e colisões de caminhos.
 - Permite desfazer o último lote bem-sucedido, desde que os itens ainda estejam nos caminhos esperados.
 
-Extensões compostas conhecidas, como `.tar.gz`, `.tar.bz2`, `.tar.xz`, `.tar.zst` e `.user.js`, também são preservadas. A extensão dos arquivos é preservada. Links simbólicos não são seguidos nem renomeados. O programa não altera a pasta raiz que foi escolhida como destino, mas pode renomear pastas e subpastas que aparecem na pré-visualização.
+Extensões compostas conhecidas, como `.tar.gz`, `.tar.bz2`, `.tar.xz`, `.tar.zst` e `.user.js`, também são preservadas. A extensão dos arquivos é preservada. Links simbólicos e junctions do Windows não são seguidos nem renomeados; seus próprios nomes continuam sendo considerados ocupados para evitar colisões. O programa não altera a pasta raiz que foi escolhida como destino, mas pode renomear pastas e subpastas que aparecem na pré-visualização.
 
 ## Como usar no Windows
 
@@ -54,7 +56,7 @@ O script gera os arquivos PNG/ICO do ícone na primeira inicialização. Se o Pi
 1. Selecione a pasta que servirá de raiz para a análise.
 2. Deixe **Incluir subpastas e arquivos dentro delas** marcado para analisar a árvore inteira. Desmarque para limitar a análise ao conteúdo diretamente dentro da pasta raiz.
 3. Configure as regras. Em **Substituir texto**, informe o trecho em **De** e o novo conteúdo em **Para**; a extensão do arquivo é mantida. O texto buscado não diferencia maiúsculas/minúsculas somente quando a opção correspondente estiver marcada. As regras são aplicadas ao nome de cada arquivo/pasta; os caminhos dos descendentes acompanham automaticamente as pastas selecionadas que forem renomeadas.
-4. Clique em **Pré-visualizar**. Use a caixa da primeira coluna para marcar ou desmarcar itens individuais. **Selecionar alterações**, **Desmarcar tudo** e **Inverter seleção** ajudam a selecionar vários itens.
+4. Clique em **Pré-visualizar**. Use a caixa da primeira coluna para marcar ou desmarcar itens individuais. Clique nos títulos das colunas para ordenar a prévia; clique novamente para inverter a ordem. Clique com o botão direito em uma linha para copiar os caminhos, comparar o nome atual com o proposto ou abrir a pasta correspondente. Use **Limpar regras** para voltar às configurações neutras sem mudar a pasta selecionada. **Selecionar alterações**, **Desmarcar tudo** e **Inverter seleção** ajudam a selecionar vários itens.
 5. Use a busca e o filtro para localizar itens, pastas, arquivos, conflitos ou alterações propostas.
 6. Confira a coluna **Situação**. Nenhum item será renomeado quando houver conflitos no plano atual; resolva-os primeiro.
 7. Clique em **Renomear selecionados** e confirme a operação.

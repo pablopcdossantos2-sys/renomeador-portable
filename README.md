@@ -66,6 +66,8 @@ O atalho **Ctrl + Enter** abre a pré-visualização. A preferência de tema e a
 
 ## Capitalização inteligente e dicionários
 
+O modo **Capitalizar todas as palavras** coloca a inicial de cada palavra em maiúscula, sem exceções. O modo legado **Capitalizar palavras** continua aceito internamente para compatibilidade, mas não é exibido na interface. O modo **Título inteligente (PT-BR/EN)** combina as listas de conectivos dos dois idiomas para nomes que misturam português e inglês.
+
 O modo **Título inteligente (PT-BR)** mantém conectivos como *a, as, o, os, um, uma, de, da, das, do, dos, e, em, por, para, com, sem, no, na, nos, nas, ao, à, às* e *pelo* em minúsculas no meio do título, exceto no início do nome.
 
 O modo **Title Case (English)** aplica uma regra equivalente aos conectivos ingleses, como *a, an, the, and, but, or, as, at, by, for, in, of, on, to, from, with* e *without*. Siglas comuns como PDF, API, HTML e NASA são preservadas.

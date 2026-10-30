@@ -116,7 +116,9 @@ def validate_filename(filename: str) -> str | None:
     """Retorna uma explicação se o nome não for válido no Windows."""
     if not filename or filename in {".", ".."}:
         return "O nome resultante está vazio."
-    if filename != filename.strip() or filename.endswith("."):
+    if filename.startswith(" "):
+        return "O nome não pode começar com espaço."
+    if filename.endswith(" ") or filename.endswith("."):
         return "O nome não pode terminar com espaço ou ponto."
     if any(ord(char) < 32 for char in filename) or re.search(r'[<>:"/\\|?*]', filename):
         return 'O nome contém caracteres não permitidos pelo Windows: < > : " / \\ | ? *'
@@ -131,7 +133,10 @@ def validate_filename(filename: str) -> str | None:
 def smart_title_case(text: str, language: str = "pt-BR") -> str:
     """Aplica capitalização de títulos, deixando conectivos em minúsculas."""
     code = language.lower()
-    small_words = ENGLISH_SMALL_WORDS if code in {"en", "en-us", "english", "inglês", "ingles"} else PORTUGUESE_SMALL_WORDS
+    if code in {"pt-br+en", "pt+en", "bilingual", "bilíngue", "bilingue"}:
+        small_words = PORTUGUESE_SMALL_WORDS | ENGLISH_SMALL_WORDS
+    else:
+        small_words = ENGLISH_SMALL_WORDS if code in {"en", "en-us", "english", "inglês", "ingles"} else PORTUGUESE_SMALL_WORDS
     output: list[str] = []
     cursor = 0
     first_word = True
@@ -140,7 +145,7 @@ def smart_title_case(text: str, language: str = "pt-BR") -> str:
         output.append(text[cursor:match.start()])
         word = match.group()
         lower_word = word.lower()
-        if word.isupper() and word in _KNOWN_ACRONYMS:
+        if (word.isupper() and (word in _KNOWN_ACRONYMS or 2 <= len(word) <= 5)) or (any(char.isupper() for char in word[1:]) and any(char.islower() for char in word)):
             replacement = word
         elif not first_word and lower_word in small_words:
             replacement = lower_word
@@ -242,20 +247,29 @@ def correct_spelling(
     return re.sub(r"[^\W\d_]{4,}", replace_word, text, flags=re.UNICODE)
 
 
+def _split_filename_extension(filename: str) -> tuple[str, str]:
+    """Preserva extensões compostas comuns em arquivos compactados e scripts."""
+    lowered = filename.casefold()
+    for extension in (".tar.gz", ".tar.bz2", ".tar.xz", ".tar.zst", ".user.js"):
+        if lowered.endswith(extension):
+            return filename[:-len(extension)], filename[-len(extension):]
+    return os.path.splitext(filename)
+
+
 def transform_filename(filename: str, options: RenameOptions, *, is_directory: bool = False) -> str:
     """Transforma o nome, mantendo a extensão dos arquivos e não das pastas."""
     if is_directory:
         stem, extension = filename, ""
     else:
-        stem, extension = os.path.splitext(filename)
+        stem, extension = _split_filename_extension(filename)
 
     if options.remove_start:
         stem = stem[options.remove_start:]
     if options.remove_end:
         stem = stem[:-options.remove_end] if options.remove_end < len(stem) else ""
 
-    for term in options.remove_terms:
-        term = term.strip()
+    for raw_term in options.remove_terms:
+        term = raw_term if raw_term and not raw_term.strip() else raw_term.strip()
         if not term:
             continue
         if options.ignore_case:
@@ -263,9 +277,12 @@ def transform_filename(filename: str, options: RenameOptions, *, is_directory: b
         else:
             stem = stem.replace(term, "")
 
-    # Desconsidera espaços acidentais nas extremidades do campo de busca.
-    # O texto de destino continua livre para conter espaços ou ficar vazio.
-    replace_from = options.replace_from.strip()
+    # Preserva um espaço literal como termo de busca; remove apenas espaços
+    # externos quando o campo também contém texto não branco.
+    replace_from = (
+        options.replace_from if options.replace_from and not options.replace_from.strip()
+        else options.replace_from.strip()
+    )
     if replace_from:
         if options.ignore_case:
             stem = re.sub(
@@ -277,14 +294,21 @@ def transform_filename(filename: str, options: RenameOptions, *, is_directory: b
         else:
             stem = stem.replace(replace_from, options.replace_to)
 
-    stem = re.sub(r"\s+", " ", stem).strip()
+    has_transform_rule = bool(
+        options.remove_start or options.remove_end or options.remove_terms
+        or options.replace_from or options.prefix or options.suffix
+        or options.spellcheck or options.case_mode != "Manter"
+    )
+    if has_transform_rule:
+        stem = re.sub(r"\s+", " ", stem).strip()
     stem = options.prefix + stem
     if options.suffix:
         stem += options.suffix
 
     if options.spellcheck:
         stem = correct_spelling(stem, options.spell_language, extra_words=options.custom_words)
-    stem = re.sub(r"\s+", " ", stem).strip()
+    if has_transform_rule:
+        stem = re.sub(r"\s+", " ", stem).strip()
 
     if options.case_mode == "MAIÚSCULAS":
         stem = stem.upper()
@@ -292,9 +316,10 @@ def transform_filename(filename: str, options: RenameOptions, *, is_directory: b
         stem = stem.lower()
     elif options.case_mode == "Título inteligente (PT-BR)":
         stem = smart_title_case(stem, "pt-BR")
-    elif options.case_mode in {"Capitalizar palavras", "Título inteligente (PT-BR/EN)"}:
-        language = "en" if options.spell_language.lower() == "english" else "pt-BR"
-        stem = smart_title_case(stem, language)
+    elif options.case_mode == "Capitalizar palavras":
+        stem = " ".join(word[:1].upper() + word[1:].lower() for word in stem.split(" "))
+    elif options.case_mode == "Título inteligente (PT-BR/EN)":
+        stem = smart_title_case(stem, "pt-BR+en")
     elif options.case_mode == "Title Case (English)":
         stem = smart_title_case(stem, "en")
 
@@ -336,19 +361,24 @@ def _effective_target(item: RenameItem, by_path: dict[str, RenameItem]) -> str:
     return PurePosixPath(*result).as_posix()
 
 
-def evaluate_plan(folder: str | os.PathLike[str], items: list[RenameItem]) -> list[RenameItem]:
-    """Recalcula conflitos e destinos efetivos após a seleção ser alterada."""
+def evaluate_plan(
+    folder: str | os.PathLike[str],
+    items: list[RenameItem],
+    existing: dict[str, str] | None = None,
+) -> list[RenameItem]:
+    """Recalcula conflitos; aceita snapshot para evitar nova varredura do disco."""
     root = Path(folder)
     by_path = {item.relative_path: item for item in items}
     errors: dict[str, list[str]] = {}
-    existing_entries: dict[str, str] = {}
+    existing_entries: dict[str, str] = existing if existing is not None else {}
 
-    for path in root.rglob("*"):
-        try:
-            rel = _relative(path, root)
-        except ValueError:
-            continue
-        existing_entries[rel.casefold()] = rel
+    if existing is None:
+        for path in root.rglob("*"):
+            try:
+                rel = _relative(path, root)
+            except ValueError:
+                continue
+            existing_entries[rel.casefold()] = rel
 
     for item in items:
         item.error = ""
@@ -359,11 +389,23 @@ def evaluate_plan(folder: str | os.PathLike[str], items: list[RenameItem]) -> li
             problem = validate_filename(item.proposed)
             if problem:
                 errors.setdefault(item.relative_path, []).append(problem)
-        for part in PurePosixPath(item.target_path).parts:
-            problem = validate_filename(part)
-            if problem:
-                errors.setdefault(item.relative_path, []).append(problem)
-                break
+        parts = PurePosixPath(item.target_path).parts
+        # Componentes preexistentes e inalterados não devem bloquear o plano.
+        original_parts = PurePosixPath(item.relative_path).parts
+        for index, part in enumerate(parts):
+            changed_component = index >= len(original_parts) or part != original_parts[index]
+            if changed_component:
+                problem = validate_filename(part)
+                if problem:
+                    errors.setdefault(item.relative_path, []).append(problem)
+                    break
+        windows_path_limit = 259
+        if sys.platform == "win32":
+            full_length = len(str(root)) + 1 + len(item.target_path)
+            if full_length > windows_path_limit:
+                errors.setdefault(item.relative_path, []).append(
+                    "O caminho resultante excede o limite do Windows (260 caracteres)."
+                )
 
     target_groups: dict[str, list[RenameItem]] = {}
     for item in items:
@@ -590,9 +632,6 @@ def apply_recursive_renames(
         raise RuntimeError(detail) from error
     return len(cleaned)
 
-
-def _is_internal_file(name: str) -> bool:
-    return name == HISTORY_FILENAME or name.startswith(_TEMP_HISTORY_PREFIX)
 
 
 def _validate_moves(root: Path, moves: Iterable[tuple[str, str]]) -> list[tuple[str, str]]:

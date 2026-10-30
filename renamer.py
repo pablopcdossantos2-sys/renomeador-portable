@@ -161,7 +161,7 @@ def smart_title_case(text: str, language: str = "pt-BR") -> str:
         output.append(text[cursor:match.start()])
         word = match.group()
         lower_word = word.lower()
-        if (word.isupper() and (word in _KNOWN_ACRONYMS or 2 <= len(word) <= 5)) or (any(char.isupper() for char in word[1:]) and any(char.islower() for char in word)):
+        if (word.isupper() and word in _KNOWN_ACRONYMS) or (any(char.isupper() for char in word[1:]) and any(char.islower() for char in word)):
             replacement = word
         elif not first_word and lower_word in small_words:
             replacement = lower_word
@@ -342,7 +342,8 @@ def transform_filename(filename: str, options: RenameOptions, *, is_directory: b
     elif options.case_mode == "Title Case (English)":
         stem = smart_title_case(stem, "en")
 
-    stem = re.sub(r"\s+", " ", stem).strip()
+    if has_transform_rule:
+        stem = re.sub(r"\s+", " ", stem).strip()
     return stem + extension
 
 

@@ -86,7 +86,7 @@ _WORD_RE = re.compile(r"[^\W\d_]+", flags=re.UNICODE)
 _KNOWN_ACRONYMS = {
     "AI", "API", "CPU", "CSS", "CSV", "DVD", "GPS", "GPU", "HDMI",
     "HTML", "HTTP", "HTTPS", "IBM", "NASA", "PDF", "PC", "RAM",
-    "SQL", "SSD", "USB", "URL", "WWW", "XML", "ZIP",
+    "SQL", "SSD", "USA", "USB", "URL", "WWW", "XML", "ZIP",
 }
 
 
@@ -161,7 +161,7 @@ def smart_title_case(text: str, language: str = "pt-BR") -> str:
         output.append(text[cursor:match.start()])
         word = match.group()
         lower_word = word.lower()
-        if (word.isupper() and word in _KNOWN_ACRONYMS) or (any(char.isupper() for char in word[1:]) and any(char.islower() for char in word)):
+        if (word.isupper() and (word in _KNOWN_ACRONYMS or re.fullmatch(r"[IVXLCDM]+", word))) or (any(char.isupper() for char in word[1:]) and any(char.islower() for char in word)):
             replacement = word
         elif not first_word and lower_word in small_words:
             replacement = lower_word

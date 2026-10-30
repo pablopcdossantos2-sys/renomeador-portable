@@ -413,9 +413,9 @@ def evaluate_plan(
                     errors.setdefault(item.relative_path, []).append(problem)
                     break
         windows_path_limit = 259
-        if sys.platform == "win32":
-            full_length = len(str(root)) + 1 + len(item.target_path)
-            if full_length > windows_path_limit:
+        if sys.platform == "win32" and item.target_path != item.relative_path:
+            target = root.joinpath(*PurePosixPath(item.target_path).parts)
+            if len(str(target)) > windows_path_limit:
                 errors.setdefault(item.relative_path, []).append(
                     "O caminho resultante excede o limite do Windows (260 caracteres)."
                 )

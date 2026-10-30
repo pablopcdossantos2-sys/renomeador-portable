@@ -77,7 +77,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
-        run: gh release create "$env:GITHUB_REF_NAME" dist\RenomeadorPortable.exe dist\RenomeadorPortable.zip --title "$env:GITHUB_REF_NAME" --generate-notes
+        run: |
+          gh release view "$env:GITHUB_REF_NAME" *> $null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create "$env:GITHUB_REF_NAME" dist\RenomeadorPortable.exe dist\RenomeadorPortable.zip --title "$env:GITHUB_REF_NAME" --generate-notes
+          } else {
+            Write-Host "Release $env:GITHUB_REF_NAME já existe; publicação ignorada."
+          }
       - name: Publicar Release a partir de execução manual
         if: github.event_name == 'workflow_dispatch' && inputs.release_version != ''
         env:

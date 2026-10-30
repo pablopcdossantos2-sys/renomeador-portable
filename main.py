@@ -775,7 +775,7 @@ class RenamerGUI:
             "kind": lambda item: (item.is_directory, item.relative_path.casefold()),
             "original": lambda item: item.relative_path.casefold(),
             "proposed": lambda item: self._display_proposed_path(item).casefold(),
-            "status": lambda item: (bool(item.error), item.error or item.status).casefold(),
+            "status": lambda item: (bool(item.error), (item.error or item.status).casefold()),
         }
         key = sort_keys.get(self.sort_column, sort_keys["original"])
         items = sorted(self.current_items, key=key, reverse=self.sort_reverse)
@@ -881,7 +881,10 @@ class RenamerGUI:
         ))
         menu.add_separator()
         menu.add_command(label="Abrir pasta do item", command=lambda: self._open_item_folder(item))
-        menu.tk_popup(event.x_root, event.y_root)
+        try:
+            menu.tk_popup(event.x_root, event.y_root)
+        finally:
+            menu.grab_release()
 
     def _copy_text(self, value: str) -> None:
         self.root.clipboard_clear()

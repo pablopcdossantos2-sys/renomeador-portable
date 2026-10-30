@@ -13,6 +13,7 @@ except ImportError:
     ensure_icon_assets = None
 
 from theme import PALETTES, frame_background_color as _frame_background_color
+from config import load_config, save_config, system_theme
 
 from renamer import (
     RenameItem,
@@ -78,7 +79,11 @@ class RenamerGUI:
         self.root.title("Renomeador Portátil")
         self.root.geometry("1240x820")
         self.root.minsize(960, 660)
-        self.theme_var = tk.StringVar(value="Escuro")
+        self.config_data = load_config()
+        initial_theme = self.config_data.get("theme")
+        if initial_theme not in PALETTES:
+            initial_theme = system_theme()
+        self.theme_var = tk.StringVar(value=initial_theme)
         self.palette = PALETTES[self.theme_var.get()]
         self.theme_widgets: dict[tk.Widget, str] = {}
         self.scrollable_frames: list[ScrollableFrame] = []
@@ -90,8 +95,8 @@ class RenamerGUI:
         self.item_by_iid: dict[str, RenameItem] = {}
         self.app_icon_photo: tk.PhotoImage | None = None
 
-        self.folder_var = tk.StringVar()
-        self.recursive_var = tk.BooleanVar(value=True)
+        self.folder_var = tk.StringVar(value=str(self.config_data.get("last_folder", "")))
+        self.recursive_var = tk.BooleanVar(value=bool(self.config_data.get("recursive", True)))
         self.remove_start_var = tk.StringVar(value="0")
         self.remove_end_var = tk.StringVar(value="0")
         self.remove_terms_var = tk.StringVar()
@@ -128,6 +133,7 @@ class RenamerGUI:
         self.filter_var.trace_add("write", lambda *_: self._render_plan())
         self.root.bind("<Control-Return>", lambda _event: self.preview())
         self._set_application_icon()
+        self.root.protocol("WM_DELETE_WINDOW", self._close_window)
         self._log("Bem-vindo! Selecione uma pasta, configure as regras e clique em Pré-visualizar.")
 
         # Maximiza a janela por padrão no Windows.
@@ -560,6 +566,17 @@ class RenamerGUI:
         self.theme_widgets[label] = role
         return label
 
+    def _save_preferences(self) -> None:
+        save_config({
+            "theme": self.theme_var.get(),
+            "last_folder": self.folder_var.get(),
+            "recursive": self.recursive_var.get(),
+        })
+
+    def _close_window(self) -> None:
+        self._save_preferences()
+        self.root.destroy()
+
     def toggle_theme(self) -> None:
         self.theme_var.set("Claro" if self.theme_var.get() == "Escuro" else "Escuro")
         self.palette = PALETTES[self.theme_var.get()]
@@ -567,6 +584,7 @@ class RenamerGUI:
         self._apply_tk_theme()
         if self.current_items:
             self._render_plan()
+        self._save_preferences()
         self._log(f"Modo {self.theme_var.get().lower()} ativado.")
 
     def show_about(self) -> None:
@@ -595,6 +613,7 @@ class RenamerGUI:
         chosen = filedialog.askdirectory(title="Selecione a pasta a analisar")
         if chosen:
             self.folder_var.set(chosen)
+            self._save_preferences()
             self.current_folder = Path(chosen)
             self.user_overrides.clear()
             self.existing_snapshot = {}

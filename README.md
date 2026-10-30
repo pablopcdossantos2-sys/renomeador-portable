@@ -88,7 +88,7 @@ Evite mover, excluir ou renomear manualmente os itens entre a operação e a op�
 
 ## Desenvolvimento e testes
 
-A interface é feita com Tkinter. A lógica de renomeação está em **renamer.py**. As dependências são declaradas em **requirements.txt**; o GitHub Actions executa os testes e compila o executável Windows incluindo ícone e dicionários.
+A interface é feita com Tkinter em **main.py**. A lógica de renomeação e as verificações de caminhos estão em **renamer.py**; **theme.py** centraliza as paletas e **config.py** cuida das preferências locais. As dependências são declaradas em **requirements.txt**; o GitHub Actions verifica a sintaxe, executa os testes e compila o executável Windows incluindo ícone e dicionários.
 
 Para executar os testes no PowerShell:
 

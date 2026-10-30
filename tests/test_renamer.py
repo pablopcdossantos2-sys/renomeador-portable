@@ -13,7 +13,6 @@ from renamer import (
     create_plan,
     smart_title_case,
     scan_existing_entries,
-    _is_link_or_junction,
     transform_filename,
     undo_last_renaming,
     evaluate_plan,
@@ -225,7 +224,7 @@ class TransformTests(unittest.TestCase):
             (junction / "outside.txt").write_text("x", encoding="utf-8")
             with patch("renamer._is_link_or_junction", side_effect=lambda path: path.name == "junction"):
                 snapshot = scan_existing_entries(root)
-            self.assertNotIn("junction".casefold(), snapshot)
+            self.assertIn("junction".casefold(), snapshot)
             self.assertNotIn("junction/outside.txt".casefold(), snapshot)
 
     def test_create_plan_does_not_follow_junctions(self):

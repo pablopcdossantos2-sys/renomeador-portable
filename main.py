@@ -31,7 +31,7 @@ PALETTES = {
         "navy": "#1f2937",
         "navy_light": "#374151",
         "ink": "#e5e7eb",
-        "muted": "#9ca3af",
+        "muted": "#aab2bf",
         "border": "#374151",
         "blue": "#60a5fa",
         "blue_hover": "#3b82f6",
@@ -47,7 +47,7 @@ PALETTES = {
         "log_text": "#d1d5db",
         "heading": "#374151",
         "input": "#1f2937",
-        "selection": "#344866",
+        "selection": "#2d4058",
         "white": "#ffffff",
     },
     "Claro": {
@@ -57,7 +57,7 @@ PALETTES = {
         "navy": "#1f2937",
         "navy_light": "#374151",
         "ink": "#111827",
-        "muted": "#6b7280",
+        "muted": "#5b6472",
         "border": "#e5e7eb",
         "blue": "#2563eb",
         "blue_hover": "#1d4ed8",
@@ -73,7 +73,7 @@ PALETTES = {
         "log_text": "#e5e7eb",
         "heading": "#f3f4f6",
         "input": "#ffffff",
-        "selection": "#dbeafe",
+        "selection": "#e6efff",
         "white": "#ffffff",
     },
 }
@@ -259,14 +259,15 @@ class RenamerGUI:
         style.configure("Field.TLabel", background=p["surface"], foreground=p["ink"], font=("Segoe UI", 9, "bold"))
         style.configure("AppText.TLabel", background=p["app"], foreground=p["muted"], font=("Segoe UI", 9))
         style.configure("AppTitle.TLabel", background=p["app"], foreground=p["ink"], font=("Segoe UI", 12, "bold"))
-        style.configure("TButton", font=("Segoe UI", 9), padding=(9, 6), background=p["surface_alt"], foreground=p["ink"], borderwidth=0)
-        style.map("TButton", background=[("active", p["blue_soft"]), ("disabled", p["surface_alt"])])
-        style.configure("Primary.TButton", font=("Segoe UI", 9, "bold"), padding=(12, 8), background=p["blue"], foreground=p["white"])
-        style.map("Primary.TButton", background=[("active", p["blue_hover"]), ("pressed", p["blue_hover"])])
+        style.configure("TButton", font=("Segoe UI", 9), padding=(9, 6), background=p["surface_alt"], foreground=p["ink"], borderwidth=0, bordercolor=p["surface_alt"], lightcolor=p["surface_alt"], darkcolor=p["surface_alt"], focuscolor=p["blue"], focusthickness=2)
+        style.map("TButton", background=[("disabled", p["surface_alt"]), ("pressed", p["selection"]), ("active", p["blue_soft"])], foreground=[("disabled", p["muted"])])
+        on_accent = "#0b1220" if self.theme_var.get() == "Escuro" else p["white"]
+        style.configure("Primary.TButton", font=("Segoe UI", 9, "bold"), padding=(12, 8), background=p["blue"], foreground=on_accent, bordercolor=p["blue"], lightcolor=p["blue"], darkcolor=p["blue"], focuscolor=p["blue"], focusthickness=2)
+        style.map("Primary.TButton", background=[("disabled", p["surface_alt"]), ("pressed", p["blue_hover"]), ("active", p["blue_hover"])], foreground=[("disabled", p["muted"])])
         style.configure("Preview.TButton", font=("Segoe UI", 10, "bold"), padding=(13, 9), background=p["blue_soft"], foreground=p["blue"])
         style.map("Preview.TButton", background=[("active", p["selection"])])
         style.configure("Undo.TButton", font=("Segoe UI", 9, "bold"), padding=(12, 9), background=p["amber_soft"], foreground=p["amber"])
-        style.map("Undo.TButton", background=[("active", p["amber_soft"])])
+        style.map("Undo.TButton", background=[("disabled", p["surface_alt"]), ("pressed", p["amber"]), ("active", p["selection"])], foreground=[("disabled", p["muted"])])
         style.configure("Modern.TEntry", padding=(8, 6), fieldbackground=p["input"], foreground=p["ink"], bordercolor=p["border"], insertcolor=p["ink"])
         style.map("Modern.TEntry", fieldbackground=[("focus", p["surface"])], bordercolor=[("focus", p["blue"])])
         style.configure("Modern.TSpinbox", padding=(5, 5), fieldbackground=p["input"], foreground=p["ink"], bordercolor=p["border"], arrowcolor=p["muted"])

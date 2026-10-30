@@ -15,6 +15,22 @@ from typing import Iterable
 HISTORY_FILENAME = ".renomeador_portable_historico.json"
 _TEMP_HISTORY_PREFIX = HISTORY_FILENAME + "."
 
+
+def _windows_path_limit() -> int:
+    """Retorna o limite conservador do Windows ou o limite longo habilitado."""
+    if sys.platform != "win32":
+        return 32767
+    try:
+        import winreg
+        with winreg.OpenKey(
+            winreg.HKEY_LOCAL_MACHINE,
+            r"SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+        ) as key:
+            enabled = winreg.QueryValueEx(key, "LongPathsEnabled")[0]
+            return 32767 if enabled else 259
+    except (OSError, ImportError):
+        return 259
+
 # Vocabulário suplementar útil para português brasileiro, documentos e informática.
 PT_BR_EXTRA_WORDS = {
     "ações", "análise", "análises", "aplicativo", "aplicativos", "arquivamento",
@@ -412,8 +428,8 @@ def evaluate_plan(
                 if problem:
                     errors.setdefault(item.relative_path, []).append(problem)
                     break
-        windows_path_limit = 259
-        if sys.platform == "win32" and item.target_path != item.relative_path:
+        windows_path_limit = _windows_path_limit()
+        if item.target_path != item.relative_path:
             target = root.joinpath(*PurePosixPath(item.target_path).parts)
             if len(str(target)) > windows_path_limit:
                 errors.setdefault(item.relative_path, []).append(

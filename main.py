@@ -12,6 +12,8 @@ try:
 except ImportError:
     ensure_icon_assets = None
 
+from theme import PALETTES, frame_background_color as _frame_background_color
+
 from renamer import (
     RenameItem,
     RenameOptions,
@@ -23,72 +25,10 @@ from renamer import (
 )
 
 
-PALETTES = {
-    "Escuro": {
-        "app": "#111827",
-        "surface": "#1f2937",
-        "surface_alt": "#273244",
-        "navy": "#1f2937",
-        "navy_light": "#374151",
-        "ink": "#e5e7eb",
-        "muted": "#aab2bf",
-        "border": "#374151",
-        "blue": "#60a5fa",
-        "blue_hover": "#3b82f6",
-        "blue_soft": "#263b58",
-        "green": "#6ee7b7",
-        "green_soft": "#19382f",
-        "red": "#fca5a5",
-        "red_soft": "#3f2528",
-        "amber": "#fcd34d",
-        "amber_soft": "#3b3120",
-        "row_alt": "#202b3b",
-        "log": "#111827",
-        "log_text": "#d1d5db",
-        "heading": "#374151",
-        "input": "#1f2937",
-        "selection": "#2d4058",
-        "white": "#ffffff",
-    },
-    "Claro": {
-        "app": "#f7f8fa",
-        "surface": "#ffffff",
-        "surface_alt": "#f3f4f6",
-        "navy": "#1f2937",
-        "navy_light": "#374151",
-        "ink": "#111827",
-        "muted": "#5b6472",
-        "border": "#e5e7eb",
-        "blue": "#2563eb",
-        "blue_hover": "#1d4ed8",
-        "blue_soft": "#eff6ff",
-        "green": "#047857",
-        "green_soft": "#ecfdf5",
-        "red": "#b91c1c",
-        "red_soft": "#fef2f2",
-        "amber": "#92400e",
-        "amber_soft": "#fffbeb",
-        "row_alt": "#f9fafb",
-        "log": "#1f2937",
-        "log_text": "#e5e7eb",
-        "heading": "#f3f4f6",
-        "input": "#ffffff",
-        "selection": "#e6efff",
-        "white": "#ffffff",
-    },
-}
-
-
 def resource_path(relative: str) -> Path:
     """Resolve arquivos de dados tanto no fonte quanto no executável PyInstaller."""
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
     return base / relative
-
-
-def _frame_background_color(palette: dict[str, str], role: str) -> str:
-    """Resolve os papéis visuais da interface para uma cor válida da paleta."""
-    palette_key = {"header": "navy", "header_text": "navy", "accent": "blue"}.get(role, role)
-    return palette.get(palette_key, palette["app"])
 
 
 class ScrollableFrame(ttk.Frame):

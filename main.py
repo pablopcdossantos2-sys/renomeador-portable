@@ -18,6 +18,7 @@ from renamer import (
     apply_recursive_renames,
     create_plan,
     evaluate_plan,
+    scan_existing_entries,
     undo_last_renaming,
 )
 
@@ -143,6 +144,7 @@ class RenamerGUI:
         self.scrollable_frames: list[ScrollableFrame] = []
         self.current_items: list[RenameItem] = []
         self.user_overrides: dict[str, bool] = {}
+        self.existing_snapshot: dict[str, str] = {}
         self._selection_context: tuple[str, bool] | None = None
         self.current_folder: Path | None = None
         self.item_by_iid: dict[str, RenameItem] = {}
@@ -654,6 +656,7 @@ class RenamerGUI:
             self.folder_var.set(chosen)
             self.current_folder = Path(chosen)
             self.user_overrides.clear()
+            self.existing_snapshot = {}
             self._selection_context = None
             self.current_items = []
             self._render_plan()
@@ -717,11 +720,15 @@ class RenamerGUI:
             self._selection_context = context
 
         try:
-            items = create_plan(folder, options, recursive=self.recursive_var.get())
+            self.existing_snapshot = scan_existing_entries(folder)
+            items = create_plan(
+                folder, options, recursive=self.recursive_var.get(),
+                existing=self.existing_snapshot,
+            )
             for item in items:
                 if item.changed and item.relative_path in self.user_overrides:
                     item.selected = self.user_overrides[item.relative_path]
-            evaluate_plan(folder, items)
+            evaluate_plan(folder, items, existing=self.existing_snapshot)
         except (OSError, ValueError, RuntimeError) as error:
             messagebox.showerror("Não foi possível analisar a pasta", str(error))
             return None
@@ -842,7 +849,7 @@ class RenamerGUI:
                 item.selected = not item.selected
                 self.user_overrides[item.relative_path] = item.selected
                 if self.current_folder:
-                    evaluate_plan(self.current_folder, self.current_items)
+                    evaluate_plan(self.current_folder, self.current_items, existing=self.existing_snapshot)
                 self._render_plan()
             return "break"
         return None

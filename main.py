@@ -945,9 +945,9 @@ class RenamerGUI:
             bool(self.prefix_var.get()),
             bool(self.suffix_var.get()),
             self.case_var.get() != "Manter",
-            self.ignore_case_var.get(),
+            self.ignore_case_var.get() and bool(self.remove_terms_var.get() or self.replace_from_var.get()),
             self.spellcheck_var.get(),
-            bool(self.custom_words_var.get().strip()),
+            self.spellcheck_var.get() and bool(self.custom_words_var.get().strip()),
         ))
         self.active_rules_var.set(f"{count} regra(s) ativa(s)")
 
@@ -967,9 +967,9 @@ class RenamerGUI:
             bool(options.prefix),
             bool(options.suffix),
             options.case_mode != "Manter",
-            options.ignore_case,
+            options.ignore_case and bool(options.remove_terms or options.replace_from),
             options.spellcheck,
-            bool(options.custom_words),
+            options.spellcheck and bool(options.custom_words),
         ))
         self.active_rules_var.set(f"{count} regra(s) ativa(s)")
 

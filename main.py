@@ -803,7 +803,8 @@ class RenamerGUI:
                 status = "— Sem alteração"
             tags = [tag]
             if index % 2:
-                tags.append("alternate")
+                # O estado fica por último e tem prioridade sobre o zebrado.
+                tags.insert(0, "alternate")
             self.preview_tree.insert(
                 "", "end", iid=iid,
                 values=(check, kind, item.relative_path, proposed, status),

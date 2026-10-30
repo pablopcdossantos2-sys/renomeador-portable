@@ -361,6 +361,19 @@ def _effective_target(item: RenameItem, by_path: dict[str, RenameItem]) -> str:
     return PurePosixPath(*result).as_posix()
 
 
+def scan_existing_entries(folder: str | os.PathLike[str]) -> dict[str, str]:
+    """Captura uma vez os caminhos existentes para reutilizar na validação da prévia."""
+    root = Path(folder)
+    entries: dict[str, str] = {}
+    for path in root.rglob("*"):
+        try:
+            relative = _relative(path, root)
+        except ValueError:
+            continue
+        entries[relative.casefold()] = relative
+    return entries
+
+
 def evaluate_plan(
     folder: str | os.PathLike[str],
     items: list[RenameItem],
@@ -451,6 +464,7 @@ def create_plan(
     options: RenameOptions,
     *,
     recursive: bool = True,
+    existing: dict[str, str] | None = None,
 ) -> list[RenameItem]:
     """Monta a prévia de arquivos e pastas, com opção de incluir toda a árvore."""
     root = Path(folder)
@@ -490,7 +504,7 @@ def create_plan(
                 target_path=rel,
             )
         )
-    return evaluate_plan(root, items)
+    return evaluate_plan(root, items, existing=existing)
 
 
 def _clean_recursive_moves(

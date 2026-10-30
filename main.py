@@ -457,7 +457,7 @@ class RenamerGUI:
         ttk.Label(formatting, text="Estilo de capitalização", style="Field.TLabel").pack(anchor="w", pady=(0, 4))
         ttk.Combobox(
             formatting, textvariable=self.case_var, state="readonly", style="Modern.TCombobox",
-            values=("Manter", "MAIÚSCULAS", "minúsculas", "Título inteligente (PT-BR)", "Title Case (English)", "Título inteligente (PT-BR/EN)", "Capitalizar palavras"),
+            values=("Manter", "MAIÚSCULAS", "minúsculas", "Título inteligente (PT-BR)", "Title Case (English)", "Título inteligente (PT-BR/EN)", "Capitalizar todas as palavras"),
         ).pack(fill="x")
         ttk.Checkbutton(formatting, text="Corrigir ortografia automaticamente", variable=self.spellcheck_var,
                         style="Card.TCheckbutton").pack(anchor="w", pady=(8, 4))

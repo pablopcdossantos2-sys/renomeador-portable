@@ -788,19 +788,19 @@ class RenamerGUI:
             proposed = self._display_proposed_path(item)
             if item.error:
                 tag = "conflict"
-                status = f"Conflito: {item.error}"
+                status = f"✕ Conflito: {item.error}"
             elif item.path_changed and not (item.selected and item.changed):
                 tag = "inherited"
-                status = "Acompanha a pasta"
+                status = "↳ Acompanha a pasta"
             elif item.selected and item.changed:
                 tag = "changed"
-                status = "Pasta selecionada" if item.is_directory else "Selecionado"
+                status = "● Pasta selecionada" if item.is_directory else "● Selecionado"
             elif item.changed:
                 tag = "unselected"
-                status = "Não selecionado"
+                status = "○ Não selecionado"
             else:
                 tag = "unchanged"
-                status = "Sem alteração"
+                status = "— Sem alteração"
             tags = [tag]
             if index % 2:
                 tags.append("alternate")

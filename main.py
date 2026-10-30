@@ -27,6 +27,13 @@ from renamer import (
 )
 
 
+def _wheel_units(delta: int) -> int:
+    """Normaliza a roda do mouse para um passo utilizável no Windows."""
+    if not delta:
+        return 0
+    return -int(delta / 120) if abs(delta) >= 120 else (-1 if delta > 0 else 1)
+
+
 def resource_path(relative: str) -> Path:
     """Resolve arquivos de dados tanto no fonte quanto no executável PyInstaller."""
     base = Path(getattr(sys, "_MEIPASS", Path(__file__).resolve().parent))
@@ -68,7 +75,7 @@ class ScrollableFrame(ttk.Frame):
         while widget is not None and widget is not self:
             widget = getattr(widget, "master", None)
         if widget is self:
-            self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+            self.canvas.yview_scroll(_wheel_units(event.delta), "units")
 
     def set_theme(self) -> None:
         self.canvas.configure(background=self.app.palette["app"])
@@ -142,6 +149,9 @@ class RenamerGUI:
         self.search_var.trace_add("write", lambda *_: self._schedule_render())
         self.filter_var.trace_add("write", lambda *_: self._render_plan())
         self.root.bind("<Control-Return>", lambda _event: self.preview())
+        self.root.bind("<F5>", lambda _event: self.preview())
+        self.root.bind("<Control-f>", self._focus_search)
+        self.root.bind("<Control-F>", self._focus_search)
         self._set_application_icon()
         self.root.protocol("WM_DELETE_WINDOW", self._close_window)
         self._log("Bem-vindo! Selecione uma pasta, configure as regras e clique em Pré-visualizar.")
@@ -161,6 +171,14 @@ class RenamerGUI:
             return round(pixels * self.root.winfo_fpixels("1i") / 96)
         except tk.TclError:
             return pixels
+
+    def _focus_search(self, _event=None):
+        """Leva o foco para a busca da prévia sem alterar o conteúdo digitado."""
+        if hasattr(self, "search_entry"):
+            self.search_entry.focus_set()
+            self.search_entry.selection_range(0, tk.END)
+            return "break"
+        return None
 
     def _schedule_render(self) -> None:
         job = getattr(self, "_search_job", None)
@@ -514,7 +532,9 @@ class RenamerGUI:
         filter_row = ttk.Frame(preview_card, style="CardInner.TFrame")
         filter_row.grid(row=1, column=0, sticky="ew", pady=(10, 8))
         filter_row.columnconfigure(0, weight=1)
-        ttk.Entry(filter_row, textvariable=self.search_var, style="Modern.TEntry").grid(row=0, column=0, sticky="ew", padx=(0, 7))
+        self.search_entry = ttk.Entry(filter_row, textvariable=self.search_var, style="Modern.TEntry")
+        self.search_entry.grid(row=0, column=0, sticky="ew", padx=(0, 7))
+        self.search_entry.configure(takefocus=True)
         ttk.Combobox(
             filter_row, textvariable=self.filter_var, state="readonly", style="Modern.TCombobox", width=19,
             values=("Todos os itens", "Para renomear", "Conflitos", "Somente arquivos", "Somente pastas", "Selecionados"),
@@ -548,6 +568,9 @@ class RenamerGUI:
         self.preview_tree.tag_configure("alternate", background=p["row_alt"])
         self.preview_tree.bind("<Button-1>", self._on_tree_click)
         self.preview_tree.bind("<space>", self._on_space)
+        self.preview_tree.bind("<Control-a>", lambda _event: self._tree_select_changes())
+        self.preview_tree.bind("<Control-i>", lambda _event: self._tree_invert_selection())
+        self.preview_tree.bind("<Control-d>", lambda _event: self._tree_deselect_all())
         self.preview_tree.bind("<Button-3>", self._show_row_context_menu)
 
         select_row = ttk.Frame(preview_card, style="CardInner.TFrame")
@@ -579,7 +602,7 @@ class RenamerGUI:
         footer = ttk.Frame(outer, style="App.TFrame")
         footer.grid(row=3, column=0, sticky="ew")
         footer.columnconfigure(0, weight=1)
-        self.footer_note = ttk.Label(footer, text="✓  Confira a prévia antes de renomear. Ctrl + Enter abre a prévia.",
+        self.footer_note = ttk.Label(footer, text="✓  Confira a prévia. F5 / Ctrl + Enter: prévia · Ctrl + F: busca.",
                                      style="AppText.TLabel")
         self.footer_note.grid(row=0, column=0, sticky="w")
         buttons = ttk.Frame(footer, style="App.TFrame")
@@ -994,6 +1017,18 @@ class RenamerGUI:
                 self._render_plan()
                 return "break"
         return None
+
+    def _tree_select_changes(self):
+        self.select_changes()
+        return "break"
+
+    def _tree_invert_selection(self):
+        self.invert_selection()
+        return "break"
+
+    def _tree_deselect_all(self):
+        self.deselect_all()
+        return "break"
 
     def select_changes(self) -> None:
         for item in self.current_items:

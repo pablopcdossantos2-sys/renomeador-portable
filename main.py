@@ -748,7 +748,9 @@ class RenamerGUI:
             return
         self.preview_tree.delete(*self.preview_tree.get_children())
         self.item_by_iid.clear()
-        items = self.current_items
+        # A prévia agrupa naturalmente cada pasta com seus descendentes;
+        # a ordem interna do plano de execução permanece inalterada.
+        items = sorted(self.current_items, key=lambda item: item.relative_path.casefold())
         files = sum(not item.is_directory for item in items)
         folders = sum(item.is_directory for item in items)
         selected_changes = sum(item.selected and item.changed and not item.error for item in items)

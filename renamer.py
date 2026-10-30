@@ -400,15 +400,15 @@ def scan_existing_entries(folder: str | os.PathLike[str]) -> dict[str, str]:
         safe_dirs = []
         for name in dirnames:
             path = base / name
+            relative = _relative(path, root)
+            # O link/junction em si ocupa um nome e deve bloquear colisões,
+            # mas nunca deve ser percorrido.
+            entries[relative.casefold()] = relative
             if not _is_link_or_junction(path):
                 safe_dirs.append(name)
-                relative = _relative(path, root)
-                entries[relative.casefold()] = relative
         dirnames[:] = safe_dirs
         for name in filenames:
             path = base / name
-            if _is_link_or_junction(path):
-                continue
             relative = _relative(path, root)
             entries[relative.casefold()] = relative
     return entries

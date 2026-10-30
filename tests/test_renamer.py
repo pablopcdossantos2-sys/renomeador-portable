@@ -103,6 +103,34 @@ class TransformTests(unittest.TestCase):
             "Project final notes.pdf",
         )
 
+    def test_text_replacement_can_target_a_literal_space(self):
+        options = RenameOptions(replace_from=" ", replace_to="_", case_mode="Manter")
+        self.assertEqual(transform_filename("a b c.txt", options), "a_b_c.txt")
+
+    def test_remove_terms_can_contain_a_literal_space(self):
+        options = RenameOptions(remove_terms=[" "], case_mode="Manter")
+        self.assertEqual(transform_filename("a b c.txt", options), "abc.txt")
+
+    def test_default_options_leave_existing_spacing_unchanged(self):
+        self.assertEqual(transform_filename("a  b .txt", RenameOptions()), "a  b .txt")
+
+    def test_bilingual_title_case_uses_both_small_word_lists(self):
+        options = RenameOptions(case_mode="Título inteligente (PT-BR/EN)")
+        self.assertEqual(
+            transform_filename("the lord of the rings e o senhor da casa.txt", options),
+            "The Lord of the Rings e o Senhor da Casa.txt",
+        )
+
+    def test_compound_archive_extension_is_preserved(self):
+        options = RenameOptions(suffix="_v2", case_mode="Manter")
+        self.assertEqual(transform_filename("backup.tar.gz", options), "backup_v2.tar.gz")
+
+    def test_title_case_preserves_internal_capitals_and_acronyms(self):
+        self.assertEqual(
+            smart_title_case("iPhone PowerPoint USA II", "pt-BR"),
+            "iPhone PowerPoint USA II",
+        )
+
     def test_text_replacement_can_remove_match_when_destination_is_empty(self):
         options = RenameOptions(replace_from="_draft", replace_to="", case_mode="Manter")
         self.assertEqual(transform_filename("report_draft.pdf", options), "report.pdf")

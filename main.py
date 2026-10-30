@@ -120,6 +120,12 @@ class RenamerGUI:
         self.active_rules_var = tk.StringVar(value="0 regras ativas")
         self.sort_column = "original"
         self.sort_reverse = False
+        for variable in (
+            self.remove_start_var, self.remove_end_var, self.remove_terms_var,
+            self.replace_from_var, self.prefix_var, self.suffix_var, self.case_var,
+            self.ignore_case_var, self.spellcheck_var, self.custom_words_var,
+        ):
+            variable.trace_add("write", lambda *_: self._refresh_active_rules())
 
         if ensure_icon_assets is not None:
             try:
@@ -928,6 +934,29 @@ class RenamerGUI:
         self._log("Regras limpas; os nomes originais serão preservados.")
         if self.folder_var.get().strip():
             self.preview()
+
+    def _refresh_active_rules(self) -> None:
+        """Atualiza o indicador imediatamente enquanto o usuário edita as regras."""
+        count = sum((
+            self._safe_positive_int(self.remove_start_var.get()),
+            self._safe_positive_int(self.remove_end_var.get()),
+            bool(self.remove_terms_var.get()),
+            bool(self.replace_from_var.get()),
+            bool(self.prefix_var.get()),
+            bool(self.suffix_var.get()),
+            self.case_var.get() != "Manter",
+            self.ignore_case_var.get(),
+            self.spellcheck_var.get(),
+            bool(self.custom_words_var.get().strip()),
+        ))
+        self.active_rules_var.set(f"{count} regra(s) ativa(s)")
+
+    @staticmethod
+    def _safe_positive_int(value: str) -> bool:
+        try:
+            return int(value) > 0
+        except (TypeError, ValueError):
+            return False
 
     def _update_active_rules(self, options: RenameOptions) -> None:
         count = sum((

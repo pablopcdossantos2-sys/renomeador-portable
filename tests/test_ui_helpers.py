@@ -1,7 +1,17 @@
 """Testes para pequenos auxiliares de navegação da interface."""
 import unittest
 
-from main import _wheel_units
+from main import _layout_mode, _wheel_units
+
+
+class ResponsiveLayoutTests(unittest.TestCase):
+    def test_switches_to_compact_layout_below_breakpoint(self):
+        self.assertEqual(_layout_mode(1039), "compact")
+        self.assertEqual(_layout_mode(760), "compact")
+
+    def test_uses_two_columns_at_or_above_breakpoint(self):
+        self.assertEqual(_layout_mode(1040), "wide")
+        self.assertEqual(_layout_mode(1240), "wide")
 
 
 class MouseWheelTests(unittest.TestCase):

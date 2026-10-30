@@ -27,6 +27,11 @@ from renamer import (
 )
 
 
+def _layout_mode(width: int) -> str:
+    """Escolhe o arranjo da interface conforme a largura disponível."""
+    return "compact" if width < 1040 else "wide"
+
+
 def _wheel_units(delta: int) -> int:
     """Normaliza a roda do mouse para um passo utilizável no Windows."""
     if not delta:
@@ -86,7 +91,7 @@ class RenamerGUI:
         self.root = root
         self.root.title("Renomeador Portátil")
         self.root.geometry("1240x820")
-        self.root.minsize(960, 660)
+        self.root.minsize(760, 560)
         self.config_data = load_config()
         initial_theme = self.config_data.get("theme")
         if initial_theme not in PALETTES:
@@ -152,6 +157,10 @@ class RenamerGUI:
         self.root.bind("<F5>", lambda _event: self.preview())
         self.root.bind("<Control-f>", self._focus_search)
         self.root.bind("<Control-F>", self._focus_search)
+        self.root.bind("<Control-l>", self._focus_folder)
+        self.root.bind("<Control-L>", self._focus_folder)
+        self.root.bind("<F6>", self._focus_preview)
+        self.root.bind("<Escape>", self._handle_escape)
         self._set_application_icon()
         self.root.protocol("WM_DELETE_WINDOW", self._close_window)
         self._log("Bem-vindo! Selecione uma pasta, configure as regras e clique em Pré-visualizar.")
@@ -179,6 +188,57 @@ class RenamerGUI:
             self.search_entry.selection_range(0, tk.END)
             return "break"
         return None
+
+    def _focus_folder(self, _event=None):
+        if hasattr(self, "folder_entry"):
+            self.folder_entry.focus_set()
+            self.folder_entry.selection_range(0, tk.END)
+            return "break"
+        return None
+
+    def _focus_preview(self, _event=None):
+        if hasattr(self, "preview_tree"):
+            self.preview_tree.focus_set()
+            selection = self.preview_tree.selection()
+            if not selection:
+                children = self.preview_tree.get_children("")
+                if children:
+                    self.preview_tree.selection_set(children[0])
+                    self.preview_tree.focus(children[0])
+            return "break"
+        return None
+
+    def _handle_escape(self, _event=None):
+        if self.search_var.get():
+            self.search_var.set("")
+            return "break"
+        return None
+
+    def _adapt_layout(self, event=None) -> None:
+        """Reorganiza os painéis em uma coluna quando a janela fica estreita."""
+        width = event.width if event is not None else self.workspace.winfo_width()
+        mode = _layout_mode(width)
+        if mode == getattr(self, "_workspace_layout", None):
+            return
+        self._workspace_layout = mode
+        if mode == "compact":
+            self.workspace.columnconfigure(0, weight=1, minsize=0)
+            self.workspace.columnconfigure(1, weight=0, minsize=0)
+            self.workspace.rowconfigure(0, weight=0, minsize=self.scale(230))
+            self.workspace.rowconfigure(1, weight=1, minsize=0)
+            self.left_panel.grid_configure(row=0, column=0, columnspan=1, padx=0, pady=(0, 9), sticky="nsew")
+            self.right_panel.grid_configure(row=1, column=0, columnspan=1, padx=0, pady=0, sticky="nsew")
+            self.footer_note.grid_remove()
+            self.buttons_frame.grid_configure(row=0, column=0, columnspan=2, sticky="e")
+        else:
+            self.workspace.columnconfigure(0, weight=0, minsize=self.scale(330))
+            self.workspace.columnconfigure(1, weight=1, minsize=self.scale(510))
+            self.workspace.rowconfigure(0, weight=1, minsize=0)
+            self.workspace.rowconfigure(1, weight=0, minsize=0)
+            self.left_panel.grid_configure(row=0, column=0, columnspan=1, padx=(0, 11), pady=0, sticky="nsew")
+            self.right_panel.grid_configure(row=0, column=1, columnspan=1, padx=0, pady=0, sticky="nsew")
+            self.footer_note.grid()
+            self.buttons_frame.grid_configure(row=0, column=1, columnspan=1, sticky="e")
 
     def _schedule_render(self) -> None:
         job = getattr(self, "_search_job", None)
@@ -397,9 +457,8 @@ class RenamerGUI:
         folder_left.grid(row=0, column=0, sticky="w", padx=(0, 16))
         ttk.Label(folder_left, text="PASTA", style="Eyebrow.TLabel").pack(anchor="w")
         ttk.Label(folder_left, text="Pasta de destino", style="Section.TLabel").pack(anchor="w", pady=(2, 0))
-        ttk.Entry(folder_card, textvariable=self.folder_var, style="Modern.TEntry").grid(
-            row=0, column=1, sticky="ew", padx=(0, 8)
-        )
+        self.folder_entry = ttk.Entry(folder_card, textvariable=self.folder_var, style="Modern.TEntry")
+        self.folder_entry.grid(row=0, column=1, sticky="ew", padx=(0, 8))
         ttk.Button(folder_card, text="Procurar pasta…", command=self.browse_folder).grid(row=0, column=2)
         ttk.Checkbutton(
             folder_card,
@@ -416,6 +475,7 @@ class RenamerGUI:
 
         workspace = ttk.Frame(outer, style="App.TFrame")
         workspace.grid(row=2, column=0, sticky="nsew", pady=(0, 11))
+        self.workspace = workspace
         workspace.columnconfigure(0, weight=0, minsize=self.scale(330))
         workspace.columnconfigure(1, weight=1, minsize=self.scale(510))
         workspace.rowconfigure(0, weight=1)
@@ -606,12 +666,15 @@ class RenamerGUI:
                                      style="AppText.TLabel")
         self.footer_note.grid(row=0, column=0, sticky="w")
         buttons = ttk.Frame(footer, style="App.TFrame")
+        self.buttons_frame = buttons
         buttons.grid(row=0, column=1, sticky="e")
         ttk.Button(buttons, text="Pré-visualizar", style="Preview.TButton", command=self.preview).pack(side="left", padx=(0, 7))
         self.undo_button = ttk.Button(buttons, text="Desfazer último lote", style="Undo.TButton", command=self.undo, state="disabled")
         self.undo_button.pack(side="left", padx=(0, 7))
         self.rename_button = ttk.Button(buttons, text="Renomear selecionados →", style="Primary.TButton", command=self.execute, state="disabled")
         self.rename_button.pack(side="left")
+        workspace.bind("<Configure>", self._adapt_layout)
+        self.root.after_idle(self._adapt_layout)
 
     def _make_badge(self, parent: tk.Widget, variable: tk.StringVar, role: str) -> tk.Label:
         label = tk.Label(

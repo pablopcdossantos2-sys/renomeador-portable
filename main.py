@@ -16,6 +16,7 @@ from theme import PALETTES, frame_background_color as _frame_background_color
 from config import load_config, save_config, system_theme
 
 from renamer import (
+    HISTORY_FILENAME,
     RenameItem,
     RenameOptions,
     apply_recursive_renames,
@@ -555,8 +556,10 @@ class RenamerGUI:
         buttons = ttk.Frame(footer, style="App.TFrame")
         buttons.grid(row=0, column=1, sticky="e")
         ttk.Button(buttons, text="Pré-visualizar", style="Preview.TButton", command=self.preview).pack(side="left", padx=(0, 7))
-        ttk.Button(buttons, text="Desfazer último lote", style="Undo.TButton", command=self.undo).pack(side="left", padx=(0, 7))
-        ttk.Button(buttons, text="Renomear selecionados →", style="Primary.TButton", command=self.execute).pack(side="left")
+        self.undo_button = ttk.Button(buttons, text="Desfazer último lote", style="Undo.TButton", command=self.undo, state="disabled")
+        self.undo_button.pack(side="left", padx=(0, 7))
+        self.rename_button = ttk.Button(buttons, text="Renomear selecionados →", style="Primary.TButton", command=self.execute, state="disabled")
+        self.rename_button.pack(side="left")
 
     def _make_badge(self, parent: tk.Widget, variable: tk.StringVar, role: str) -> tk.Label:
         label = tk.Label(
@@ -748,6 +751,14 @@ class RenamerGUI:
             for item in items
         )
         conflicts = sum(bool(item.error) for item in items)
+        if hasattr(self, "rename_button"):
+            self.rename_button.configure(
+                text=f"Renomear {selected_changes} itens →",
+                state="normal" if selected_changes and not conflicts else "disabled",
+            )
+        if hasattr(self, "undo_button"):
+            history_exists = bool(self.current_folder and (self.current_folder / HISTORY_FILENAME).is_file())
+            self.undo_button.configure(state="normal" if history_exists else "disabled")
         self.item_count_var.set(f"{files} arquivos")
         self.folder_count_var.set(f"{folders} pastas")
         self.change_count_var.set(f"{selected_changes} selecionados")

@@ -380,16 +380,37 @@ def _effective_target(item: RenameItem, by_path: dict[str, RenameItem]) -> str:
     return PurePosixPath(*result).as_posix()
 
 
+def _is_link_or_junction(path: Path) -> bool:
+    """Não atravessa links simbólicos nem junctions do Windows."""
+    try:
+        if path.is_symlink():
+            return True
+        is_junction = getattr(path, "is_junction", None)
+        return bool(is_junction and is_junction())
+    except OSError:
+        return True
+
+
 def scan_existing_entries(folder: str | os.PathLike[str]) -> dict[str, str]:
     """Captura uma vez os caminhos existentes para reutilizar na validação da prévia."""
     root = Path(folder)
     entries: dict[str, str] = {}
-    for path in root.rglob("*"):
-        try:
+    for current, dirnames, filenames in os.walk(root, topdown=True, followlinks=False):
+        base = Path(current)
+        safe_dirs = []
+        for name in dirnames:
+            path = base / name
+            if not _is_link_or_junction(path):
+                safe_dirs.append(name)
+                relative = _relative(path, root)
+                entries[relative.casefold()] = relative
+        dirnames[:] = safe_dirs
+        for name in filenames:
+            path = base / name
+            if _is_link_or_junction(path):
+                continue
             relative = _relative(path, root)
-        except ValueError:
-            continue
-        entries[relative.casefold()] = relative
+            entries[relative.casefold()] = relative
     return entries
 
 
@@ -495,7 +516,7 @@ def create_plan(
         base = Path(current)
         found_dirs = sorted(
             name for name in dirnames
-            if not _is_internal_file(name) and not (base / name).is_symlink()
+            if not _is_internal_file(name) and not _is_link_or_junction(base / name)
         )
         dirnames[:] = found_dirs if recursive else ([] if base == root else found_dirs)
         for name in found_dirs:
@@ -503,7 +524,7 @@ def create_plan(
             candidates.append((path, True))
         for name in sorted(filenames, key=str.casefold):
             path = base / name
-            if _is_internal_file(name) or path.is_symlink():
+            if _is_internal_file(name) or _is_link_or_junction(path):
                 continue
             candidates.append((path, False))
 

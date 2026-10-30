@@ -338,7 +338,8 @@ class RenamerGUI:
         subtitle.pack(anchor="w", pady=(2, 0))
         theme_frame = self._tk_frame(header, "header")
         theme_frame.pack(side="right", padx=(8, 16), pady=18)
-        ttk.Button(theme_frame, text="☼ Claro / ☾ Escuro", command=self.toggle_theme).pack(side="left")
+        self.theme_button = ttk.Button(theme_frame, text=self._theme_action_label(), command=self.toggle_theme)
+        self.theme_button.pack(side="left")
         ttk.Button(theme_frame, text="Sobre", command=self.show_about).pack(side="left", padx=(7, 0))
         self._register_theme_widget(accent, "accent")
         self._register_theme_widget(heading, "header")
@@ -580,8 +581,13 @@ class RenamerGUI:
         self._save_preferences()
         self.root.destroy()
 
+    def _theme_action_label(self) -> str:
+        return "☾ Modo escuro" if self.theme_var.get() == "Claro" else "☼ Modo claro"
+
     def toggle_theme(self) -> None:
         self.theme_var.set("Claro" if self.theme_var.get() == "Escuro" else "Escuro")
+        if hasattr(self, "theme_button"):
+            self.theme_button.configure(text=self._theme_action_label())
         self.palette = PALETTES[self.theme_var.get()]
         self._configure_styles()
         self._apply_tk_theme()
@@ -912,12 +918,16 @@ class RenamerGUI:
             return
 
         self._log(f"Concluído: {count} nome(s) alterado(s). O último lote pode ser desfeito.")
-        messagebox.showinfo("Renomeação concluída", f"{count} arquivo(s)/pasta(s) renomeado(s) com sucesso.")
         self._make_plan(clear_log=False)
 
     def undo(self) -> None:
         folder = self._get_folder()
         if folder is None:
+            return
+        history_path = folder / HISTORY_FILENAME
+        if not history_path.is_file():
+            self._log("Não há lote anterior disponível para desfazer nesta pasta.")
+            self.undo_button.configure(state="disabled")
             return
         if not messagebox.askyesno(
             "Desfazer último lote",
@@ -936,8 +946,6 @@ class RenamerGUI:
         if warning:
             self._log("[AVISO] " + warning)
             messagebox.showwarning("Arquivos restaurados com aviso", warning)
-        else:
-            messagebox.showinfo("Operação desfeita", f"{count} arquivo(s)/pasta(s) restaurado(s).")
         self._make_plan(clear_log=False)
 
 

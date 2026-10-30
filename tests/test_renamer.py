@@ -1,6 +1,7 @@
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from renamer import (
     _get_spellchecker,
@@ -12,6 +13,7 @@ from renamer import (
     create_plan,
     smart_title_case,
     scan_existing_entries,
+    _is_link_or_junction,
     transform_filename,
     undo_last_renaming,
     evaluate_plan,
@@ -214,6 +216,29 @@ class TransformTests(unittest.TestCase):
             self.assertIn("Folder", paths)
             self.assertIn("root.txt", paths)
             self.assertNotIn("Folder/child.txt", paths)
+
+    def test_snapshot_does_not_traverse_junctions(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            junction = root / "junction"
+            junction.mkdir()
+            (junction / "outside.txt").write_text("x", encoding="utf-8")
+            with patch("renamer._is_link_or_junction", side_effect=lambda path: path.name == "junction"):
+                snapshot = scan_existing_entries(root)
+            self.assertNotIn("junction".casefold(), snapshot)
+            self.assertNotIn("junction/outside.txt".casefold(), snapshot)
+
+    def test_create_plan_does_not_follow_junctions(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            junction = root / "junction"
+            junction.mkdir()
+            (junction / "outside.txt").write_text("x", encoding="utf-8")
+            with patch("renamer._is_link_or_junction", side_effect=lambda path: path.name == "junction"):
+                plan = create_plan(root, RenameOptions(prefix="Novo "))
+            paths = {item.relative_path for item in plan}
+            self.assertNotIn("junction", paths)
+            self.assertNotIn("junction/outside.txt", paths)
 
     def test_evaluate_plan_reuses_existing_snapshot_without_changing_results(self):
         with tempfile.TemporaryDirectory() as temp:

@@ -861,6 +861,10 @@ class RenamerGUI:
     def _render_plan(self) -> None:
         if not hasattr(self, "preview_tree"):
             return
+        # Recriar as linhas não deve apagar o foco/linha ativa do teclado.
+        # Isso é especialmente importante ao alternar seleção com Espaço.
+        previous_selection = self.preview_tree.selection()
+        previous_focus = self.preview_tree.focus()
         self.preview_tree.delete(*self.preview_tree.get_children())
         self.item_by_iid.clear()
         # A prévia agrupa naturalmente cada pasta com seus descendentes;
@@ -941,6 +945,14 @@ class RenamerGUI:
         self.preview_tree.tag_configure("changed", foreground=p["green"])
         self.preview_tree.tag_configure("unselected", foreground=p["muted"])
         self.preview_tree.tag_configure("unchanged", foreground=p["muted"])
+
+        # Restaura a linha ativa quando ela continua visível após filtro/ordenação.
+        visible = set(self.preview_tree.get_children(""))
+        if previous_selection and previous_selection[0] in visible:
+            self.preview_tree.selection_set(previous_selection[0])
+        if previous_focus in visible:
+            self.preview_tree.focus(previous_focus)
+            self.preview_tree.see(previous_focus)
 
     def sort_preview(self, column: str) -> None:
         """Ordena a prévia pela coluna escolhida, alternando ascendente/descendente."""

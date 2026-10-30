@@ -867,12 +867,6 @@ class RenamerGUI:
             self.sort_reverse = False
         self._render_plan()
 
-    def _selected_preview_item(self) -> RenameItem | None:
-        selection = self.preview_tree.selection()
-        if not selection:
-            return None
-        return self.item_by_iid.get(selection[0])
-
     def _show_row_context_menu(self, event) -> None:
         row = self.preview_tree.identify_row(event.y)
         if not row or row not in self.item_by_iid:

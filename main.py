@@ -803,12 +803,13 @@ class RenamerGUI:
             )
 
         p = self.palette
+        # A tag zebrada é configurada primeiro para não ocultar fundos semânticos.
+        self.preview_tree.tag_configure("alternate", background=p["row_alt"])
         self.preview_tree.tag_configure("conflict", foreground=p["red"], background=p["red_soft"])
         self.preview_tree.tag_configure("inherited", foreground=p["muted"])
         self.preview_tree.tag_configure("changed", foreground=p["green"])
         self.preview_tree.tag_configure("unselected", foreground=p["muted"])
         self.preview_tree.tag_configure("unchanged", foreground=p["muted"])
-        self.preview_tree.tag_configure("alternate", background=p["row_alt"])
 
     def _on_tree_click(self, event):
         region = self.preview_tree.identify("region", event.x, event.y)

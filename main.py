@@ -922,6 +922,8 @@ class RenamerGUI:
         self.spellcheck_var.set(False)
         self.spell_language_var.set("Português + English")
         self.custom_words_var.set("")
+        self.user_overrides.clear()
+        self._selection_context = None
         self.active_rules_var.set("0 regras ativas")
         self._log("Regras limpas; os nomes originais serão preservados.")
         if self.folder_var.get().strip():

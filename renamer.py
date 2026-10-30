@@ -426,12 +426,7 @@ def evaluate_plan(
     existing_entries: dict[str, str] = existing if existing is not None else {}
 
     if existing is None:
-        for path in root.rglob("*"):
-            try:
-                rel = _relative(path, root)
-            except ValueError:
-                continue
-            existing_entries[rel.casefold()] = rel
+        existing_entries.update(scan_existing_entries(root))
 
     for item in items:
         item.error = ""

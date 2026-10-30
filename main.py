@@ -142,6 +142,8 @@ class RenamerGUI:
         self.theme_widgets: dict[tk.Widget, str] = {}
         self.scrollable_frames: list[ScrollableFrame] = []
         self.current_items: list[RenameItem] = []
+        self.user_overrides: dict[str, bool] = {}
+        self._selection_context: tuple[str, bool] | None = None
         self.current_folder: Path | None = None
         self.item_by_iid: dict[str, RenameItem] = {}
         self.app_icon_photo: tk.PhotoImage | None = None
@@ -155,7 +157,7 @@ class RenamerGUI:
         self.replace_to_var = tk.StringVar()
         self.prefix_var = tk.StringVar()
         self.suffix_var = tk.StringVar()
-        self.case_var = tk.StringVar(value="Título inteligente (PT-BR/EN)")
+        self.case_var = tk.StringVar(value="Manter")
         self.ignore_case_var = tk.BooleanVar(value=False)
         self.spellcheck_var = tk.BooleanVar(value=False)
         self.spell_language_var = tk.StringVar(value="Português + English")
@@ -180,7 +182,7 @@ class RenamerGUI:
         self._configure_styles()
         self._build_ui()
         self._apply_tk_theme()
-        self.search_var.trace_add("write", lambda *_: self._render_plan())
+        self.search_var.trace_add("write", lambda *_: self._schedule_render())
         self.filter_var.trace_add("write", lambda *_: self._render_plan())
         self.root.bind("<Control-Return>", lambda _event: self.preview())
         self._set_application_icon()
@@ -194,6 +196,15 @@ class RenamerGUI:
                 self.root.attributes("-zoomed", True)
             except tk.TclError:
                 pass
+
+    def _schedule_render(self) -> None:
+        job = getattr(self, "_search_job", None)
+        if job is not None:
+            try:
+                self.root.after_cancel(job)
+            except tk.TclError:
+                pass
+        self._search_job = self.root.after(180, self._render_plan)
 
     def _register_theme_widget(self, widget: tk.Widget, role: str) -> tk.Widget:
         self.theme_widgets[widget] = role
@@ -642,6 +653,8 @@ class RenamerGUI:
         if chosen:
             self.folder_var.set(chosen)
             self.current_folder = Path(chosen)
+            self.user_overrides.clear()
+            self._selection_context = None
             self.current_items = []
             self._render_plan()
             self._log(f"Pasta selecionada: {chosen}")
@@ -674,7 +687,11 @@ class RenamerGUI:
         return RenameOptions(
             remove_start=remove_start,
             remove_end=remove_end,
-            remove_terms=[term.strip() for term in self.remove_terms_var.get().split(",") if term.strip()],
+            remove_terms=[
+                term if term and not term.strip() else term.strip()
+                for term in self.remove_terms_var.get().split(",")
+                if term
+            ],
             replace_from=self.replace_from_var.get(),
             replace_to=self.replace_to_var.get(),
             prefix=self.prefix_var.get(),
@@ -694,15 +711,16 @@ class RenamerGUI:
         if options is None:
             return None
 
-        previous_selection: dict[str, bool] = {}
-        if self.current_folder is not None and self.current_folder.resolve() == folder.resolve():
-            previous_selection = {item.relative_path: item.selected for item in self.current_items}
+        context = (str(folder.resolve()), self.recursive_var.get())
+        if self._selection_context != context:
+            self.user_overrides.clear()
+            self._selection_context = context
 
         try:
             items = create_plan(folder, options, recursive=self.recursive_var.get())
             for item in items:
-                if item.relative_path in previous_selection:
-                    item.selected = previous_selection[item.relative_path]
+                if item.changed and item.relative_path in self.user_overrides:
+                    item.selected = self.user_overrides[item.relative_path]
             evaluate_plan(folder, items)
         except (OSError, ValueError, RuntimeError) as error:
             messagebox.showerror("Não foi possível analisar a pasta", str(error))
@@ -728,22 +746,8 @@ class RenamerGUI:
         return folder, items
 
     def _display_proposed_path(self, item: RenameItem) -> str:
-        parts = list(Path(item.relative_path).parts)
-        if not parts:
-            return item.target_path
-        by_path = {row.relative_path: row for row in self.current_items}
-        displayed: list[str] = []
-        for index, part in enumerate(parts):
-            prefix = Path(*parts[:index + 1]).as_posix()
-            if index < len(parts) - 1:
-                ancestor = by_path.get(prefix)
-                if ancestor and ancestor.is_directory and ancestor.selected and ancestor.changed:
-                    displayed.append(ancestor.proposed)
-                else:
-                    displayed.append(part)
-            else:
-                displayed.append(item.proposed if item.changed else part)
-        return "/".join(displayed)
+        # evaluate_plan já calcula o caminho efetivo, incluindo pastas ancestrais.
+        return item.target_path or item.relative_path
 
     def _passes_filter(self, item: RenameItem) -> bool:
         query = self.search_var.get().strip().casefold()
@@ -836,6 +840,7 @@ class RenamerGUI:
             item = self.item_by_iid[row]
             if item.changed:
                 item.selected = not item.selected
+                self.user_overrides[item.relative_path] = item.selected
                 if self.current_folder:
                     evaluate_plan(self.current_folder, self.current_items)
                 self._render_plan()
@@ -848,6 +853,7 @@ class RenamerGUI:
             item = self.item_by_iid[selection[0]]
             if item.changed:
                 item.selected = not item.selected
+                self.user_overrides[item.relative_path] = item.selected
                 if self.current_folder:
                     evaluate_plan(self.current_folder, self.current_items)
                 self._render_plan()
@@ -857,6 +863,8 @@ class RenamerGUI:
     def select_changes(self) -> None:
         for item in self.current_items:
             item.selected = item.changed
+            if item.changed:
+                self.user_overrides[item.relative_path] = True
         if self.current_folder:
             evaluate_plan(self.current_folder, self.current_items)
         self._render_plan()
@@ -865,6 +873,8 @@ class RenamerGUI:
     def deselect_all(self) -> None:
         for item in self.current_items:
             item.selected = False
+            if item.changed:
+                self.user_overrides[item.relative_path] = False
         if self.current_folder:
             evaluate_plan(self.current_folder, self.current_items)
         self._render_plan()
@@ -874,6 +884,7 @@ class RenamerGUI:
         for item in self.current_items:
             if item.changed:
                 item.selected = not item.selected
+                self.user_overrides[item.relative_path] = item.selected
         if self.current_folder:
             evaluate_plan(self.current_folder, self.current_items)
         self._render_plan()
@@ -951,7 +962,22 @@ class RenamerGUI:
         self._make_plan(clear_log=False)
 
 
+def _enable_high_dpi() -> None:
+    """Ativa o dimensionamento nativo por monitor no Windows."""
+    if sys.platform != "win32":
+        return
+    try:
+        import ctypes
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(2)
+        except Exception:
+            ctypes.windll.user32.SetProcessDPIAware()
+    except Exception:
+        pass
+
+
 def main() -> None:
+    _enable_high_dpi()
     root = tk.Tk()
     RenamerGUI(root)
     root.mainloop()

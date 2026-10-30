@@ -12,14 +12,14 @@ Aplicativo portátil para Windows que renomeia arquivos e pastas em lote, com pr
 - Alterna entre os modos **Claro** e **Escuro**.
 - Usa um ícone próprio nas janelas do aplicativo e no executável Windows.
 - Remove uma quantidade de caracteres do início ou do final do nome, preservando a extensão dos arquivos.
-- Remove vários termos, separados por vírgula, e substitui texto literalmente, com opção de ignorar maiúsculas/minúsculas. A substituição atua sobre o nome antes da extensão; espaços acidentais nas extremidades do texto buscado são desconsiderados.
+- Remove vários termos, separados por vírgula, e substitui texto literalmente, com opção de ignorar maiúsculas/minúsculas. A substituição atua sobre o nome antes da extensão; espaços acidentais nas extremidades do texto buscado são desconsiderados quando o termo contém outros caracteres; um espaço digitado isoladamente pode ser usado para substituir espaços entre palavras.
 - Adiciona prefixos e sufixos.
-- Converte nomes para MAIÚSCULAS, minúsculas ou aplica capitalização inteligente em português ou inglês.
+- Por padrão, mantém os nomes originais. Quando solicitado, converte nomes para MAIÚSCULAS, minúsculas ou aplica capitalização inteligente em português, inglês ou nos dois idiomas.
 - Corrige ortografia opcionalmente com dicionário português, inglês ou ambos ao mesmo tempo; combina vocabulários suplementares e preserva termos reconhecidos em qualquer idioma. Também permite adicionar palavras personalizadas.
 - Detecta nomes inválidos, destinos ocupados e colisões de caminhos.
 - Permite desfazer o último lote bem-sucedido, desde que os itens ainda estejam nos caminhos esperados.
 
-A extensão dos arquivos é preservada. Links simbólicos não são seguidos nem renomeados. O programa não altera a pasta raiz que foi escolhida como destino, mas pode renomear pastas e subpastas que aparecem na pré-visualização.
+Extensões compostas conhecidas, como `.tar.gz`, `.tar.bz2`, `.tar.xz`, `.tar.zst` e `.user.js`, também são preservadas. A extensão dos arquivos é preservada. Links simbólicos não são seguidos nem renomeados. O programa não altera a pasta raiz que foi escolhida como destino, mas pode renomear pastas e subpastas que aparecem na pré-visualização.
 
 ## Como usar no Windows
 
@@ -60,7 +60,7 @@ O script gera os arquivos PNG/ICO do ícone na primeira inicialização. Se o Pi
 7. Clique em **Renomear selecionados** e confirme a operação.
 8. Para reverter o lote mais recente, selecione a mesma pasta e clique em **Desfazer último lote**.
 
-O atalho **Ctrl + Enter** abre a pré-visualização. Para marcar/desmarcar a linha selecionada, clique na caixa de seleção ou pressione a barra de espaço quando a tabela estiver focada.
+O atalho **Ctrl + Enter** abre a pré-visualização. Sem regras ativas, a prévia mantém os nomes originais e não marca arquivos para renomeação. Para marcar/desmarcar a linha selecionada, clique na caixa de seleção ou pressione a barra de espaço quando a tabela estiver focada.
 
 **Como a seleção de pastas funciona:** marcar uma pasta para renomear também muda o caminho de seus conteúdos, como aconteceria no Explorador de Arquivos. Isso não renomeia automaticamente o nome-base dos arquivos que estão dentro dela. Para alterar o próprio nome de um arquivo, marque também a linha dele. Se desmarcar a pasta, mas mantiver um arquivo selecionado, o arquivo é renomeado dentro do nome atual da pasta.
 
@@ -94,4 +94,4 @@ A compilação gera um EXE com ícone próprio, além de um ZIP. O workflow tamb
 
 ## Licença
 
-Ainda não foi definida uma licença de redistribuição para este repositório.
+Este projeto é distribuído sob os termos da **GNU Affero General Public License v3.0 (AGPL-3.0)**. Consulte o arquivo [LICENSE](LICENSE) para o texto integral.

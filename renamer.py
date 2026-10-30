@@ -332,8 +332,11 @@ def transform_filename(filename: str, options: RenameOptions, *, is_directory: b
         stem = stem.lower()
     elif options.case_mode == "Título inteligente (PT-BR)":
         stem = smart_title_case(stem, "pt-BR")
-    elif options.case_mode == "Capitalizar palavras":
+    elif options.case_mode == "Capitalizar todas as palavras":
         stem = " ".join(word[:1].upper() + word[1:].lower() for word in stem.split(" "))
+    elif options.case_mode == "Capitalizar palavras":
+        # Rótulo legado: mantém a capitalização inteligente em português.
+        stem = smart_title_case(stem, "pt-BR")
     elif options.case_mode == "Título inteligente (PT-BR/EN)":
         stem = smart_title_case(stem, "pt-BR+en")
     elif options.case_mode == "Title Case (English)":

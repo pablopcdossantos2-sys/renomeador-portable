@@ -822,7 +822,7 @@ class RenamerGUI:
                 item.selected = not item.selected
                 self.user_overrides[item.relative_path] = item.selected
                 if self.current_folder:
-                    evaluate_plan(self.current_folder, self.current_items)
+                    evaluate_plan(self.current_folder, self.current_items, existing=self.existing_snapshot)
                 self._render_plan()
                 return "break"
         return None
@@ -833,7 +833,7 @@ class RenamerGUI:
             if item.changed:
                 self.user_overrides[item.relative_path] = True
         if self.current_folder:
-            evaluate_plan(self.current_folder, self.current_items)
+            evaluate_plan(self.current_folder, self.current_items, existing=self.existing_snapshot)
         self._render_plan()
         self._log("Selecionadas todas as alterações propostas.")
 
@@ -843,7 +843,7 @@ class RenamerGUI:
             if item.changed:
                 self.user_overrides[item.relative_path] = False
         if self.current_folder:
-            evaluate_plan(self.current_folder, self.current_items)
+            evaluate_plan(self.current_folder, self.current_items, existing=self.existing_snapshot)
         self._render_plan()
         self._log("Todas as alterações foram desmarcadas.")
 
@@ -853,7 +853,7 @@ class RenamerGUI:
                 item.selected = not item.selected
                 self.user_overrides[item.relative_path] = item.selected
         if self.current_folder:
-            evaluate_plan(self.current_folder, self.current_items)
+            evaluate_plan(self.current_folder, self.current_items, existing=self.existing_snapshot)
         self._render_plan()
         self._log("Seleção invertida.")
 

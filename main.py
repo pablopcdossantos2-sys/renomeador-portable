@@ -878,7 +878,7 @@ class RenamerGUI:
         menu.add_command(label="Copiar caminho proposto", command=lambda: self._copy_text(self._display_proposed_path(item)))
         menu.add_command(label="Comparar nomes", command=lambda: messagebox.showinfo(
             "Comparação de nomes",
-            f"Atual:\\n{item.relative_path}\\n\\nProposto:\\n{self._display_proposed_path(item)}",
+            f"Atual:\n{item.relative_path}\n\nProposto:\n{self._display_proposed_path(item)}",
             parent=self.root,
         ))
         menu.add_separator()

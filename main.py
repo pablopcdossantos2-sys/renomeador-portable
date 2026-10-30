@@ -117,6 +117,9 @@ class RenamerGUI:
         self.folder_count_var = tk.StringVar(value="0 pastas")
         self.change_count_var = tk.StringVar(value="0 selecionados")
         self.conflict_count_var = tk.StringVar(value="0 conflitos")
+        self.active_rules_var = tk.StringVar(value="0 regras ativas")
+        self.sort_column = "original"
+        self.sort_reverse = False
 
         if ensure_icon_assets is not None:
             try:
@@ -400,6 +403,8 @@ class RenamerGUI:
         ttk.Label(left_intro, text="OPÇÕES", style="Eyebrow.TLabel").pack(anchor="w")
         ttk.Label(left_intro, text="Regras de renomeação", style="AppTitle.TLabel").pack(anchor="w", pady=(2, 0))
         ttk.Label(left_intro, text="Combine somente as opções de que precisa.", style="AppText.TLabel").pack(anchor="w", pady=(2, 0))
+        ttk.Label(left_intro, textvariable=self.active_rules_var, style="AppText.TLabel").pack(anchor="w", pady=(3, 0))
+        ttk.Button(left_intro, text="Limpar regras", command=self.clear_rules).pack(side="right", anchor="ne")
 
         scroller = ScrollableFrame(left_panel, self, style="App.TFrame")
         scroller.grid(row=1, column=0, sticky="nsew")
@@ -514,10 +519,10 @@ class RenamerGUI:
         columns = ("select", "kind", "original", "proposed", "status")
         self.preview_tree = ttk.Treeview(table_area, columns=columns, show="headings", height=12, selectmode="browse")
         self.preview_tree.heading("select", text="✓")
-        self.preview_tree.heading("kind", text="TIPO")
-        self.preview_tree.heading("original", text="NOME ATUAL / CAMINHO")
-        self.preview_tree.heading("proposed", text="NOVO NOME / CAMINHO")
-        self.preview_tree.heading("status", text="SITUAÇÃO")
+        self.preview_tree.heading("kind", text="TIPO", command=lambda: self.sort_preview("kind"))
+        self.preview_tree.heading("original", text="NOME ATUAL / CAMINHO", command=lambda: self.sort_preview("original"))
+        self.preview_tree.heading("proposed", text="NOVO NOME / CAMINHO", command=lambda: self.sort_preview("proposed"))
+        self.preview_tree.heading("status", text="SITUAÇÃO", command=lambda: self.sort_preview("status"))
         self.preview_tree.column("select", width=44, minwidth=44, stretch=False, anchor="center")
         self.preview_tree.column("kind", width=76, minwidth=68, stretch=False)
         self.preview_tree.column("original", width=190, minwidth=130, stretch=True)
@@ -535,6 +540,7 @@ class RenamerGUI:
         self.preview_tree.tag_configure("alternate", background=p["row_alt"])
         self.preview_tree.bind("<Button-1>", self._on_tree_click)
         self.preview_tree.bind("<space>", self._on_space)
+        self.preview_tree.bind("<Button-3>", self._show_row_context_menu)
 
         select_row = ttk.Frame(preview_card, style="CardInner.TFrame")
         select_row.grid(row=3, column=0, sticky="ew", pady=(8, 0))
@@ -697,6 +703,7 @@ class RenamerGUI:
         if options is None:
             return None
 
+        self._update_active_rules(options)
         context = (str(folder.resolve()), self.recursive_var.get())
         if self._selection_context != context:
             self.user_overrides.clear()
@@ -764,7 +771,14 @@ class RenamerGUI:
         self.item_by_iid.clear()
         # A prévia agrupa naturalmente cada pasta com seus descendentes;
         # a ordem interna do plano de execução permanece inalterada.
-        items = sorted(self.current_items, key=lambda item: item.relative_path.casefold())
+        sort_keys = {
+            "kind": lambda item: (item.is_directory, item.relative_path.casefold()),
+            "original": lambda item: item.relative_path.casefold(),
+            "proposed": lambda item: self._display_proposed_path(item).casefold(),
+            "status": lambda item: (bool(item.error), item.error or item.status).casefold(),
+        }
+        key = sort_keys.get(self.sort_column, sort_keys["original"])
+        items = sorted(self.current_items, key=key, reverse=self.sort_reverse)
         files = sum(not item.is_directory for item in items)
         folders = sum(item.is_directory for item in items)
         selected_changes = sum(item.selected and item.changed and not item.error for item in items)
@@ -833,6 +847,95 @@ class RenamerGUI:
         self.preview_tree.tag_configure("changed", foreground=p["green"])
         self.preview_tree.tag_configure("unselected", foreground=p["muted"])
         self.preview_tree.tag_configure("unchanged", foreground=p["muted"])
+
+    def sort_preview(self, column: str) -> None:
+        """Ordena a prévia pela coluna escolhida, alternando ascendente/descendente."""
+        if column not in {"kind", "original", "proposed", "status"}:
+            return
+        if self.sort_column == column:
+            self.sort_reverse = not self.sort_reverse
+        else:
+            self.sort_column = column
+            self.sort_reverse = False
+        self._render_plan()
+
+    def _selected_preview_item(self) -> RenameItem | None:
+        selection = self.preview_tree.selection()
+        if not selection:
+            return None
+        return self.item_by_iid.get(selection[0])
+
+    def _show_row_context_menu(self, event) -> None:
+        row = self.preview_tree.identify_row(event.y)
+        if not row or row not in self.item_by_iid:
+            return
+        self.preview_tree.selection_set(row)
+        item = self.item_by_iid[row]
+        menu = tk.Menu(self.root, tearoff=False)
+        menu.add_command(label="Copiar caminho atual", command=lambda: self._copy_text(item.relative_path))
+        menu.add_command(label="Copiar caminho proposto", command=lambda: self._copy_text(self._display_proposed_path(item)))
+        menu.add_command(label="Comparar nomes", command=lambda: messagebox.showinfo(
+            "Comparação de nomes",
+            f"Atual:\\n{item.relative_path}\\n\\nProposto:\\n{self._display_proposed_path(item)}",
+            parent=self.root,
+        ))
+        menu.add_separator()
+        menu.add_command(label="Abrir pasta do item", command=lambda: self._open_item_folder(item))
+        menu.tk_popup(event.x_root, event.y_root)
+
+    def _copy_text(self, value: str) -> None:
+        self.root.clipboard_clear()
+        self.root.clipboard_append(value)
+        self._log(f"Caminho copiado: {value}")
+
+    def _open_item_folder(self, item: RenameItem) -> None:
+        if self.current_folder is None:
+            return
+        path = self.current_folder.joinpath(*Path(item.relative_path).parts)
+        target = path if item.is_directory else path.parent
+        try:
+            if sys.platform == "win32":
+                os.startfile(str(target))
+            else:
+                import subprocess
+                command = ["open", str(target)] if sys.platform == "darwin" else ["xdg-open", str(target)]
+                subprocess.Popen(command)
+        except (OSError, AttributeError) as error:
+            messagebox.showerror("Não foi possível abrir a pasta", str(error), parent=self.root)
+
+    def clear_rules(self) -> None:
+        """Restaura todas as regras ao estado neutro sem alterar a pasta escolhida."""
+        self.remove_start_var.set("0")
+        self.remove_end_var.set("0")
+        self.remove_terms_var.set("")
+        self.replace_from_var.set("")
+        self.replace_to_var.set("")
+        self.prefix_var.set("")
+        self.suffix_var.set("")
+        self.case_var.set("Manter")
+        self.ignore_case_var.set(False)
+        self.spellcheck_var.set(False)
+        self.spell_language_var.set("Português + English")
+        self.custom_words_var.set("")
+        self.active_rules_var.set("0 regras ativas")
+        self._log("Regras limpas; os nomes originais serão preservados.")
+        if self.folder_var.get().strip():
+            self.preview()
+
+    def _update_active_rules(self, options: RenameOptions) -> None:
+        count = sum((
+            options.remove_start > 0,
+            options.remove_end > 0,
+            bool(options.remove_terms),
+            bool(options.replace_from),
+            bool(options.prefix),
+            bool(options.suffix),
+            options.case_mode != "Manter",
+            options.ignore_case,
+            options.spellcheck,
+            bool(options.custom_words),
+        ))
+        self.active_rules_var.set(f"{count} regra(s) ativa(s)")
 
     def _on_tree_click(self, event):
         region = self.preview_tree.identify("region", event.x, event.y)

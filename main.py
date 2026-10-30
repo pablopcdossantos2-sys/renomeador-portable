@@ -146,6 +146,13 @@ class RenamerGUI:
             except tk.TclError:
                 pass
 
+    def scale(self, pixels: int) -> int:
+        """Converte medidas de referência (96 DPI) para pixels do monitor."""
+        try:
+            return round(pixels * self.root.winfo_fpixels("1i") / 96)
+        except tk.TclError:
+            return pixels
+
     def _schedule_render(self) -> None:
         job = getattr(self, "_search_job", None)
         if job is not None:
@@ -222,7 +229,7 @@ class RenamerGUI:
         style.map("Modern.TCombobox", fieldbackground=[("readonly", p["input"]), ("focus", p["surface"])], foreground=[("readonly", p["ink"])])
         style.configure("Card.TCheckbutton", background=p["surface"], foreground=p["ink"], font=("Segoe UI", 9), padding=(0, 3))
         style.map("Card.TCheckbutton", background=[("active", p["surface"])])
-        style.configure("Treeview", background=p["surface"], fieldbackground=p["surface"], foreground=p["ink"], rowheight=27, bordercolor=p["border"], borderwidth=0, font=("Segoe UI", 9))
+        style.configure("Treeview", background=p["surface"], fieldbackground=p["surface"], foreground=p["ink"], rowheight=self.scale(27), bordercolor=p["border"], borderwidth=0, font=("Segoe UI", 9))
         style.configure("Treeview.Heading", background=p["heading"], foreground=p["muted"], font=("Segoe UI", 9, "bold"), padding=(7, 7), relief="flat")
         style.map("Treeview", background=[("selected", p["selection"])], foreground=[("selected", p["ink"])])
         style.configure("Vertical.TScrollbar", background=p["surface_alt"], troughcolor=p["app"], bordercolor=p["app"], arrowcolor=p["muted"])
@@ -291,7 +298,14 @@ class RenamerGUI:
         card.pack(fill="x", pady=(0, 8))
         ttk.Label(card, text=title, style="Section.TLabel").pack(anchor="w", pady=(0, 7))
         if note:
-            ttk.Label(card, text=note, style="Hint.TLabel", wraplength=300, justify="left").pack(anchor="w", pady=(0, 7))
+            hint = ttk.Label(card, text=note, style="Hint.TLabel", justify="left")
+            hint.pack(anchor="w", pady=(0, 7))
+            hint.bind(
+                "<Configure>",
+                lambda event, widget=hint: widget.configure(
+                    wraplength=max(self.scale(120), event.width - self.scale(8))
+                ),
+            )
         return card
 
     def _field(self, parent: tk.Widget, label: str, variable: tk.StringVar) -> ttk.Entry:
@@ -309,7 +323,7 @@ class RenamerGUI:
         outer.columnconfigure(0, weight=1)
         outer.rowconfigure(2, weight=1)
 
-        header = self._tk_frame(outer, "header", height=70)
+        header = self._tk_frame(outer, "header", height=self.scale(70))
         header.grid(row=0, column=0, sticky="ew", pady=(0, 11))
         header.grid_propagate(False)
         accent = tk.Frame(header, bg=p["blue"], width=5)
@@ -373,8 +387,8 @@ class RenamerGUI:
 
         workspace = ttk.Frame(outer, style="App.TFrame")
         workspace.grid(row=2, column=0, sticky="nsew", pady=(0, 11))
-        workspace.columnconfigure(0, weight=0, minsize=330)
-        workspace.columnconfigure(1, weight=1, minsize=510)
+        workspace.columnconfigure(0, weight=0, minsize=self.scale(330))
+        workspace.columnconfigure(1, weight=1, minsize=self.scale(510))
         workspace.rowconfigure(0, weight=1)
 
         left_panel = ttk.Frame(workspace, style="App.TFrame")
@@ -538,7 +552,7 @@ class RenamerGUI:
         ttk.Label(log_head, text="REGISTRO DE OPERAÇÕES", style="Eyebrow.TLabel").pack(side="left")
         ttk.Label(log_head, textvariable=self.summary_var, style="Hint.TLabel").pack(side="right")
         self.log_text = tk.Text(
-            log_card, height=4, wrap="word", font=("Cascadia Code", 9),
+            log_card, height=4, wrap="word", font=("Consolas", 9),
             bg=p["log"], fg=p["log_text"], insertbackground=p["white"],
             selectbackground=p["blue"], relief="flat", borderwidth=0, padx=9, pady=7, state="disabled",
         )

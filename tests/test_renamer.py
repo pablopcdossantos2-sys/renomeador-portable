@@ -11,6 +11,7 @@ from renamer import (
     correct_spelling,
     create_plan,
     smart_title_case,
+    scan_existing_entries,
     transform_filename,
     undo_last_renaming,
     evaluate_plan,
@@ -213,6 +214,20 @@ class TransformTests(unittest.TestCase):
             self.assertIn("Folder", paths)
             self.assertIn("root.txt", paths)
             self.assertNotIn("Folder/child.txt", paths)
+
+    def test_evaluate_plan_reuses_existing_snapshot_without_changing_results(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            (root / "a.txt").write_text("a", encoding="utf-8")
+            (root / "b.txt").write_text("b", encoding="utf-8")
+            items = create_plan(root, RenameOptions(prefix="Novo "))
+            snapshot = scan_existing_entries(root)
+            with_snapshot = evaluate_plan(root, items, existing=snapshot)
+            without_snapshot = evaluate_plan(root, items)
+            self.assertEqual(
+                [(item.target_path, item.error, item.status) for item in with_snapshot],
+                [(item.target_path, item.error, item.status) for item in without_snapshot],
+            )
 
     def test_recursive_plan_includes_subfolders_and_files(self):
         with tempfile.TemporaryDirectory() as temp:

@@ -18,7 +18,7 @@ from renamer import (
     validate_filename,
 )
 
-from main import PALETTES, _frame_background_color
+from theme import PALETTES, frame_background_color as _frame_background_color
 
 
 class PaletteRoleTests(unittest.TestCase):

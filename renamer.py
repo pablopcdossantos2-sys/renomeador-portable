@@ -24,7 +24,7 @@ def _windows_path_limit() -> int:
         import winreg
         with winreg.OpenKey(
             winreg.HKEY_LOCAL_MACHINE,
-            r"SYSTEM\\CurrentControlSet\\Control\\FileSystem",
+            r"SYSTEM\CurrentControlSet\Control\FileSystem",
         ) as key:
             enabled = winreg.QueryValueEx(key, "LongPathsEnabled")[0]
             return 32767 if enabled else 259
